@@ -26,11 +26,43 @@
     return `${API_BASE_URL}${path}`;
   }
 
+  class AppHttpError extends Error {
+    constructor(status, bodyText, bodyJson) {
+      super(`HTTP ${status}`);
+      this.name = "AppHttpError";
+      this.status = status;
+      this.bodyText = bodyText || "";
+      this.bodyJson = bodyJson;
+    }
+  }
+
+  const elAppModal = document.getElementById("appModal");
+  const elAppModalTitle = document.getElementById("appModalTitle");
+  const elAppModalBody = document.getElementById("appModalBody");
+
+  function openAppModal(title, message) {
+    if (!elAppModal) return;
+    if (elAppModalTitle) elAppModalTitle.textContent = title || "Mensagem";
+    if (elAppModalBody) elAppModalBody.textContent = message || "";
+    elAppModal.style.display = "block";
+  }
+
+  function closeAppModal() {
+    if (!elAppModal) return;
+    elAppModal.style.display = "none";
+  }
+
   async function fetchJson(path, opts) {
     const res = await fetch(apiUrl(path), opts);
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (e) {
+        json = null;
+      }
+      throw new AppHttpError(res.status, text || res.statusText, json);
     }
     return await res.json();
   }
@@ -274,12 +306,12 @@
     const mesaId = elMesaSelect?.value;
     if (!mesaId) {
       setOrderUiState("error", "Selecione uma mesa.");
-      alert("Selecione uma mesa.");
+      openAppModal("Atenção", "Selecione uma mesa para enviar o pedido.");
       return;
     }
     if (!cart.length) {
       setOrderUiState("error", "Carrinho vazio.");
-      alert("Carrinho vazio.");
+      openAppModal("Atenção", "Seu carrinho está vazio.");
       return;
     }
 
@@ -331,8 +363,25 @@
       }
     } catch (e) {
       console.error("[CARDAPIO] Erro ao enviar pedido para", apiUrl(orderPath), e);
-      setOrderUiState("error", "Erro ao enviar pedido");
-      alert(`Erro ao enviar pedido: ${e.message}`);
+      let friendly = "Erro ao enviar pedido.";
+      if (e && e.name === "AppHttpError") {
+        const detail = e.bodyJson && typeof e.bodyJson === "object" ? e.bodyJson.detail : null;
+        if (e.status === 409) {
+          // Conflito: normalmente falta de estoque
+          friendly = detail ? String(detail) : "Estoque insuficiente para um ou mais itens.";
+        } else if (detail) {
+          friendly = String(detail);
+        } else if (e.bodyText) {
+          friendly = String(e.bodyText);
+        } else {
+          friendly = `Falha no servidor (HTTP ${e.status}).`;
+        }
+      } else if (e && e.message) {
+        friendly = String(e.message);
+      }
+
+      setOrderUiState("error", "Não foi possível enviar o pedido");
+      openAppModal("Não foi possível enviar", friendly);
     } finally {
       if (elSubmitOrderBtn) {
         // If success, UI will be reset by timeout. If not, re-enable now.
@@ -347,6 +396,7 @@
   window.openCart = openCart;
   window.closeCart = closeCart;
   window.submitOrder = submitOrder;
+  window.closeAppModal = closeAppModal;
 
   document.addEventListener("click", (e) => {
     const btn = e.target;

@@ -76,5 +76,18 @@
 
     <script src="./config.js"></script>
     <script src="./cliente.js"></script>
+
+    <div id="appModal" class="app-modal" style="display: none;">
+        <div class="app-modal-content" role="dialog" aria-modal="true" aria-labelledby="appModalTitle">
+            <div class="app-modal-header">
+                <div id="appModalTitle" class="app-modal-title">Mensagem</div>
+                <button class="app-modal-close" type="button" onclick="closeAppModal()">×</button>
+            </div>
+            <div id="appModalBody" class="app-modal-body"></div>
+            <div class="app-modal-actions">
+                <button class="app-modal-btn" type="button" onclick="closeAppModal()">OK</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
