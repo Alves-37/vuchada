@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Restaurante & Cardápio Digital</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FF8C00;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 2px solid #FF8C00;
+            color: #FF8C00;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #FF8C00;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger:hover {
+            transform: scale(1.1);
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: #FF8C00;
+            margin: 3px 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 2px;
+            transform-origin: center;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+            background: #D2691E;
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+            background: #D2691E;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: block;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-100%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mobile-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 0;
+            color: #FF8C00;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        .mobile-menu.active a {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .mobile-menu a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu a:nth-child(2) { transition-delay: 0.2s; }
+
+        .mobile-menu a:hover {
+            color: #D2691E;
+            padding-left: 1rem;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Restaurant Status */
+        .restaurant-status {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .status-open {
+            color: #28a745;
+            border: 2px solid #28a745;
+        }
+
+        .status-closed {
+            color: #dc3545;
+            border: 2px solid #dc3545;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-open .status-indicator {
+            background: #28a745;
+        }
+
+        .status-closed .status-indicator {
+            background: #dc3545;
+        }
+
+        /* Hero Section with Carousel */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            visibility: hidden;
+            z-index: 1;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+
+        .carousel-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.2) 100%);
+        }
+
+        .carousel-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        .carousel-content h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: slideInUp 1s ease-out, pulse 2s infinite;
+            color: #FF8C00;
+        }
+
+        .carousel-content p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            animation: slideInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            animation: slideInUp 1s ease-out 0.6s both;
+        }
+
+        .cta-btn {
+            background: #FF8C00;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid #FF8C00;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            background: #D2691E;
+            border-color: #D2691E;
+        }
+
+        .cta-btn.secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .cta-btn.secondary:hover {
+            background: white;
+            color: #FF8C00;
+            border-color: white;
+        }
+
+        .cta-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .cta-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Carousel Navigation */
+        .carousel-nav {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 3;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 2rem;
+            background: white;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #FF8C00;
+        }
+
+        /* Footer */
+        .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-buttons {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+
+            .carousel-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .carousel-content p {
+                font-size: 1.1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .restaurant-status {
+                position: absolute;
+                top: 120px;
+                right: 20px;
+                left: auto;
+                margin: 0;
+                width: auto;
+                justify-content: center;
+                font-size: 0.8rem;
+                padding: 0.25rem 0.6rem;
+            }
+       
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo" onclick="window.location.href='./index.html'" style="cursor: pointer;">
+            🍽️ Vuchada
+        </div>
+        <nav class="nav-buttons">
+            <a href="./servicos.html" class="nav-btn">Serviços</a>
+            <a href="./sobre.html" class="nav-btn">Sobre</a>
+        </nav>
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./servicos.html">Serviços</a>
+        <a href="./sobre.html">Sobre</a>
+    </div>
+
+    <!-- Restaurant Status -->
+    <div class="restaurant-status status-open" id="restaurantStatus">
+        <div class="status-indicator"></div>
+        <span id="statusText">Aberto</span>
+    </div>
+
+    <!-- Hero Section with Carousel -->
+    <section class="hero">
+        <div class="carousel">
+            <div class="carousel-slide active" style="background-image: url('https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')">
+                <div class="carousel-content">
+                    <h1>Vuchada</h1>
+                    <p>Descubra sabores únicos e experiências gastronômicas inesquecíveis</p>
+                    <div class="cta-buttons">
+                        <a href="./cliente.html" class="cta-btn cardapio-btn">🍽️ Ver Cardápio</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('https://images.pexels.com/photos/825661/pexels-photo-825661.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')">
+                <div class="carousel-content">
+                    <h1>Cardápio Digital</h1>
+                    <p>Navegue pelo nosso cardápio interativo e faça pedidos diretamente do seu dispositivo</p>
+                    <div class="cta-buttons">
+                        <a href="./cliente.html" class="cta-btn cardapio-btn">🍽️ Ver Cardápio</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')">
+                <div class="carousel-content">
+                    <h1>Qualidade Garantida</h1>
+                    <p>Ingredientes frescos e preparação artesanal para uma experiência gastronômica única</p>
+                    <div class="cta-buttons">
+                        <a href="./cliente.html" class="cta-btn cardapio-btn">🍽️ Ver Cardápio</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')">
+                <div class="carousel-content">
+                    <h1>Sobremesas Especiais</h1>
+                    <p>Finalize sua refeição com nossas deliciosas sobremesas artesanais</p>
+                    <div class="cta-buttons">
+                        <a href="./cliente.html" class="cta-btn cardapio-btn">🍽️ Ver Cardápio</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Carousel Navigation -->
+        <div class="carousel-nav">
+            <div class="carousel-dot active" data-slide="0"></div>
+            <div class="carousel-dot" data-slide="1"></div>
+            <div class="carousel-dot" data-slide="2"></div>
+            <div class="carousel-dot" data-slide="3"></div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2>Por que escolher a Vuchada?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🍕</div>
+                <h3>Cardápio Digital</h3>
+                <p>Navegue pelo nosso cardápio digital interativo e faça pedidos diretamente do seu dispositivo.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Pedidos Rápidos</h3>
+                <p>Seus pedidos são processados instantaneamente e enviados diretamente para a cozinha.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Qualidade Garantida</h3>
+                <p>Ingredientes frescos e preparação artesanal para uma experiência gastronômica única.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 Vuchada - Todos os direitos reservados</p>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script>
+        // Carousel functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        const totalSlides = slides.length;
+        let carouselInterval;
+
+        function showSlide(index) {
+            // Ensure index is within bounds
+            if (index < 0) index = totalSlides - 1;
+            if (index >= totalSlides) index = 0;
+            
+            // Remove active class from all slides and dots
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Add active class to current slide and dot
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+            
+            currentSlide = index;
+            console.log(`Showing slide ${index + 1} of ${totalSlides}`);
+        }
+
+        function nextSlide() {
+            const nextIndex = (currentSlide + 1) % totalSlides;
+            showSlide(nextIndex);
+            console.log(`Auto-advancing to slide ${nextIndex + 1}`);
+        }
+
+        function startCarousel() {
+            if (carouselInterval) clearInterval(carouselInterval);
+            carouselInterval = setInterval(nextSlide, 4000);
+        }
+
+        function stopCarousel() {
+            if (carouselInterval) {
+                clearInterval(carouselInterval);
+                carouselInterval = null;
+            }
+        }
+
+        // Initialize carousel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log(`Carousel initialized with ${totalSlides} slides`);
+            showSlide(0);
+            startCarousel();
+        });
+
+        // Dot navigation
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentSlide = index;
+                showSlide(currentSlide);
+                // Restart carousel after manual navigation
+                stopCarousel();
+                startCarousel();
+            });
+        });
+
+        // Pause carousel on hover
+        const carousel = document.querySelector('.carousel');
+        carousel.addEventListener('mouseenter', stopCarousel);
+        carousel.addEventListener('mouseleave', startCarousel);
+
+        // Mobile menu functionality
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        hamburger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            }
+        });
+
+        // Verificar status do restaurante
+        async function checkRestaurantStatus() {
+            try {
+                const base = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ? String(window.APP_CONFIG.API_BASE_URL).replace(/\/$/, '') : '';
+                const url = base ? `${base}/api/restaurant-status` : '/api/restaurant-status';
+                const response = await fetch(url);
+                const status = await response.json();
+                
+                const statusElement = document.getElementById('restaurantStatus');
+                const statusText = document.getElementById('statusText');
+                const cardapioBtns = document.querySelectorAll('.cardapio-btn');
+                
+                if (status.is_open) {
+                    statusElement.className = 'restaurant-status status-open';
+                    statusText.textContent = 'Aberto';
+                    cardapioBtns.forEach(btn => {
+                        btn.classList.remove('disabled');
+                        btn.textContent = '🍽️ Ver Cardápio';
+                    });
+                } else {
+                    statusElement.className = 'restaurant-status status-closed';
+                    statusText.textContent = 'Fechado';
+                    cardapioBtns.forEach(btn => {
+                        btn.classList.add('disabled');
+                        btn.textContent = '🔒 Cardápio Fechado';
+                    });
+                }
+                console.log('Status do restaurante atualizado:', status);
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+                const statusText = document.getElementById('statusText');
+                if (statusText) {
+                    statusText.textContent = 'Status indisponível';
+                }
+            }
+        }
+
+        // Verificar status quando DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            checkRestaurantStatus();
+            
+            // Verificar status a cada 5 minutos
+            setInterval(checkRestaurantStatus, 300000);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Sobre Nós</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FF8C00;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 2px solid #FF8C00;
+            color: #FF8C00;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #FF8C00;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger:hover {
+            transform: scale(1.1);
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: #FF8C00;
+            margin: 3px 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 2px;
+            transform-origin: center;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+            background: #D2691E;
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+            background: #D2691E;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: block;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-100%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mobile-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 0;
+            color: #FF8C00;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        .mobile-menu.active a {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .mobile-menu a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu a:nth-child(2) { transition-delay: 0.2s; }
+
+        .mobile-menu a:hover {
+            color: #D2691E;
+            padding-left: 1rem;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            margin-top: 100px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #FF8C00;
+            }
+            to {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #FF8C00;
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #FF8C00;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .section-content {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight {
+            color: #FF8C00;
+            font-weight: bold;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #FF8C00;
+        }
+
+        .info-card h3 {
+            color: #FF8C00;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .info-card p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .values-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .values-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .values-list li:before {
+            content: "✓";
+            color: #FF8C00;
+            font-weight: bold;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .location-info {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .location-title {
+            font-size: 1.5rem;
+            color: #FF8C00;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .location-details {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .section-content {
+                font-size: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .hero-section {
+                padding: 2rem 1rem;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+
+            .title {
+                font-size: 1.2rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo" onclick="window.location.href='./'" style="cursor: pointer;">
+            🍽️ Vuchada
+        </div>
+        <nav class="nav-buttons">
+            <a href="./servicos.html" class="nav-btn">Serviços</a>
+            <a href="./sobre.html" class="nav-btn">Sobre</a>
+        </nav>
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./servicos.html">Serviços</a>
+        <a href="./sobre.html">Sobre</a>
+    </div>
+
+    <div class="container">
+        <div class="hero-section">
+            <h1 class="hero-title">Vuchada</h1>
+            <p class="hero-subtitle">Sabor e Tradição em Gurúè, Moçambique</p>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Nossa História</h2>
+            <p class="section-content">
+                O <span class="highlight">Restaurante Vuchada</span> nasceu da paixão pela gastronomia moçambicana e do desejo de oferecer aos nossos clientes uma experiência única de sabores autênticos. Localizado no coração de <span class="highlight">Gurúè, Moçambique</span>, somos mais que um restaurante - somos um ponto de encontro para famílias, amigos e todos que apreciam a boa comida.
+            </p>
+            <p class="section-content">
+                Fundado com a missão de preservar e celebrar a rica tradição culinária moçambicana, o Vuchada combina receitas tradicionais com técnicas modernas, criando pratos que contam histórias e despertam memórias.
+            </p>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Nossa Missão</h2>
+            <p class="section-content">
+                Proporcionar uma experiência gastronômica excepcional, oferecendo pratos de qualidade superior preparados com ingredientes frescos e locais, sempre com o compromisso de satisfazer nossos clientes e contribuir para o desenvolvimento da comunidade local.
+            </p>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Nossos Valores</h2>
+            <ul class="values-list">
+                <li><strong>Qualidade:</strong> Utilizamos apenas ingredientes frescos e de alta qualidade</li>
+                <li><strong>Tradição:</strong> Preservamos as receitas e sabores autênticos moçambicanos</li>
+                <li><strong>Hospitalidade:</strong> Tratamos cada cliente como parte da nossa família</li>
+                <li><strong>Sustentabilidade:</strong> Apoiamos produtores locais e práticas sustentáveis</li>
+                <li><strong>Inovação:</strong> Constantemente buscamos melhorar e inovar nossos serviços</li>
+                <li><strong>Comunidade:</strong> Contribuímos ativamente para o desenvolvimento de Gurúè</li>
+            </ul>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>Nossa Especialidade</h3>
+                <p>Culinária moçambicana tradicional com pratos como Matapa, Frango à Zambeziana, Caril de Camarão e muito mais, sempre preparados com ingredientes frescos e locais.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Ambiente</h3>
+                <p>Um ambiente acolhedor e familiar, perfeito para refeições em grupo, encontros românticos ou simplesmente desfrutar de uma boa refeição em boa companhia.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Horário de Funcionamento</h3>
+                <p>Estamos abertos de segunda a domingo, das 7h às 22h, oferecendo café da manhã, almoço e jantar para sua conveniência.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>Reservas</h3>
+                <p>Aceitamos reservas para grupos e ocasiões especiais. Entre em contato conosco para garantir seu lugar em nossa casa.</p>
+            </div>
+        </div>
+
+        <div class="location-info">
+            <h3 class="location-title">Nossa Localização</h3>
+            <p class="location-details">
+                <strong>Endereço:</strong> Gurúè, Província da Zambézia, Moçambique<br>
+                <strong>WhatsApp:</strong> <a href="https://wa.me/258866036384" style="color: #FF8C00; text-decoration: none;">+258 866 036 384</a><br>
+                <strong>Email:</strong> <a href="mailto:vuchada@gmail.com" style="color: #FF8C00; text-decoration: none;">vuchada@gmail.com</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu functionality
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        hamburger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            }
+        });
+
+        // Adicionar efeito de scroll suave
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

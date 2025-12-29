@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Login Funcionário</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF8C00 0%, #FFA500 50%, #FFD700 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #D2691E;
+            margin-bottom: 0.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #FF8C00;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .back-btn:hover {
+            color: #333;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 2rem;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👨‍💼 Vuchada</div>
+            <div class="subtitle">Acesso ao Sistema</div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <form class="form" id="loginForm">
+            <div class="form-group">
+                <label class="form-label">Usuário:</label>
+                <input type="text" class="form-input" id="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Senha:</label>
+                <input type="password" class="form-input" id="password" required>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Entrar
+            </button>
+        </form>
+        
+        <button class="back-btn" onclick="window.location.href='/'">
+            ← Voltar ao Menu Principal
+        </button>
+        
+        <div class="loading" id="loading">
+            Verificando credenciais...
+        </div>
+    </div>
+
+    <script src="/config.js"></script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function showLoading() {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Entrando...';
+            loading.style.display = 'block';
+            hideError();
+        }
+
+        function hideLoading() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Entrar';
+            loading.style.display = 'none';
+        }
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showError('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(API_CONFIG.getUrl(API_CONFIG.LOGIN), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redirecionar para a página de pedidos
+                    window.location.href = result.redirect;
+                } else {
+                    showError(result.message || 'Erro ao fazer login.');
+                }
+            } catch (error) {
+                showError('Erro de conexão. Tente novamente.');
+                console.error('Erro:', error);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Limpar erro quando o usuário começar a digitar
+        document.getElementById('username').addEventListener('input', hideError);
+        document.getElementById('password').addEventListener('input', hideError);
+    </script>
+</body>
+</html> 

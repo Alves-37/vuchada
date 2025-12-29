@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Cardápio Digital</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./cliente-fixes.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <button class="back-btn" onclick="window.location.href='./index.html'">←</button>
+            <div class="title">Cardápio Digital</div>
+        </div>
+    </div>
+
+    <!-- Botão do carrinho fixo -->
+    <div class="cart-container">
+        <button class="cart-btn" onclick="openCart()">
+            🛒 <span class="cart-count" id="cartCount">0</span>
+        </button>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar produtos...">
+    </div>
+
+    <div class="categories" id="categories">
+        <div class="loading">Carregando categorias...</div>
+    </div>
+
+    <div class="products">
+        <div class="products-grid" id="productsGrid">
+            <div class="loading">Carregando produtos...</div>
+        </div>
+    </div>
+
+    <!-- Modal do Carrinho Melhorado -->
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-modal-content">
+            <div class="cart-modal-header">
+                <h2>🛒 Seu Pedido</h2>
+                <button class="cart-modal-close" onclick="closeCart()">×</button>
+            </div>
+            
+            <div class="cart-modal-body">
+                <div class="cart-items" id="cartItems">
+                    <!-- Itens do carrinho serão inseridos aqui -->
+                </div>
+                
+                <div class="mesa-selection">
+                    <h3>🏪 Selecione sua Mesa</h3>
+                    <select id="mesaSelect" class="mesa-select">
+                        <option value="">Carregando mesas...</option>
+                    </select>
+                </div>
+                
+                <div class="cart-actions">
+                    <button class="cart-action-btn secondary" onclick="closeCart()">Cancelar</button>
+                    <button class="cart-action-btn primary" id="submitOrderBtn" onclick="submitOrder()">Fazer Pedido</button>
+                </div>
+
+                <div id="orderStatus" class="order-status" style="display: none;"></div>
+            </div>
+            
+            <div class="cart-total">
+                <h3>Total do Pedido</h3>
+                <div class="cart-total-amount" id="cartTotal">0,00 MT</div>
+            </div>
+        </div>
+        
+        <!-- Formulário oculto para envio do pedido -->
+        <form id="orderForm" style="display: none;"></form>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./cliente.js"></script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Nossos Serviços</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FF8C00;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 2px solid #FF8C00;
+            color: #FF8C00;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #FF8C00;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger:hover {
+            transform: scale(1.1);
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: #FF8C00;
+            margin: 3px 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 2px;
+            transform-origin: center;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+            background: #D2691E;
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+            background: #D2691E;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: block;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-100%);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mobile-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: 1rem 0;
+            color: #FF8C00;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        .mobile-menu.active a {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .mobile-menu a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu a:nth-child(2) { transition-delay: 0.2s; }
+
+        .mobile-menu a:hover {
+            color: #D2691E;
+            padding-left: 1rem;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            margin-top: 100px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #FF8C00;
+            }
+            to {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #FF8C00;
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .service-icon {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            font-size: 3rem;
+        }
+
+        .service-content {
+            padding: 2rem;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            color: #FF8C00;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .service-description {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .service-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .service-features li {
+            padding: 0.3rem 0;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .service-features li:before {
+            content: "•";
+            color: #FF8C00;
+            font-weight: bold;
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .menu-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #FF8C00;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .menu-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .menu-category {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #FF8C00;
+        }
+
+        .menu-category h3 {
+            color: #FF8C00;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .menu-category p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .special-offers {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .offers-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .offers-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .offers-list li {
+            padding: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .contact-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .contact-title {
+            font-size: 1.5rem;
+            color: #FF8C00;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .contact-info {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .contact-info a {
+            color: #FF8C00;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            background: #FF8C00;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #D2691E;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-buttons {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo" onclick="window.location.href='./'" style="cursor: pointer;">
+            🍽️ Vuchada
+        </div>
+        <nav class="nav-buttons">
+            <a href="./servicos.html" class="nav-btn">Serviços</a>
+            <a href="./sobre.html" class="nav-btn">Sobre</a>
+        </nav>
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./servicos.html">Serviços</a>
+        <a href="./sobre.html">Sobre</a>
+    </div>
+
+    <div class="container">
+        
+        <div class="hero-section">
+            <h1 class="hero-title">Nossos Serviços</h1>
+            <p class="hero-subtitle">Descubra tudo que oferecemos para tornar sua experiência gastronômica inesquecível</p>
+        </div>
+        
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">📱</div>
+                <div class="service-content">
+                    <h3 class="service-title">Cardápio Digital</h3>
+                    <p class="service-description">
+                        Acesse nosso cardápio completo através do seu dispositivo móvel. 
+                        Visualize fotos dos pratos, preços e faça pedidos de forma rápida e prática.
+                    </p>
+                    <ul class="service-features">
+                        <li>Navegação intuitiva</li>
+                        <li>Fotos dos pratos</li>
+                        <li>Preços atualizados</li>
+                        <li>Pedidos online</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon">⚡</div>
+                <div class="service-content">
+                    <h3 class="service-title">Pedidos Online</h3>
+                    <p class="service-description">
+                        Faça seus pedidos diretamente pela internet. Escolha sua mesa, 
+                        selecione os pratos e acompanhe o status do seu pedido em tempo real.
+                    </p>
+                    <ul class="service-features">
+                        <li>Pedidos instantâneos</li>
+                        <li>Acompanhamento em tempo real</li>
+                        <li>Escolha de mesa</li>
+                        <li>Histórico de pedidos</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon">👨‍🍳</div>
+                <div class="service-content">
+                    <h3 class="service-title">Atendimento Personalizado</h3>
+                    <p class="service-description">
+                        Nossa equipe está sempre pronta para atender você com cordialidade 
+                        e eficiência, garantindo uma experiência gastronômica excepcional.
+                    </p>
+                    <ul class="service-features">
+                        <li>Equipe treinada</li>
+                        <li>Atendimento rápido</li>
+                        <li>Recomendações personalizadas</li>
+                        <li>Suporte especializado</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon">🏠</div>
+                <div class="service-content">
+                    <h3 class="service-title">Ambiente Acolhedor</h3>
+                    <p class="service-description">
+                        Desfrute de um ambiente confortável e familiar, perfeito para 
+                        refeições com amigos e família.
+                    </p>
+                    <ul class="service-features">
+                        <li>Ambiente climatizado</li>
+                        <li>Música ambiente</li>
+                        <li>Decoração moderna</li>
+                        <li>Conforto garantido</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <h2 class="section-title">Nossas Especialidades</h2>
+            <div class="menu-categories">
+                <div class="menu-category">
+                    <h3>Pratos Principais</h3>
+                    <p>Uma variedade de pratos tradicionais e contemporâneos, preparados com ingredientes frescos e técnicas culinárias modernas.</p>
+                </div>
+                <div class="menu-category">
+                    <h3>Sobremesas</h3>
+                    <p>Deliciosas sobremesas artesanais, perfeitas para finalizar sua refeição com um toque especial.</p>
+                </div>
+                <div class="menu-category">
+                    <h3>Bebidas</h3>
+                    <p>Refrigerantes, sucos naturais, cafés especiais e uma seleção de vinhos para acompanhar sua refeição.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="special-offers">
+            <h2 class="offers-title">Ofertas Especiais</h2>
+            <ul class="offers-list">
+                <li>🎉 Happy Hour: 50% de desconto em bebidas (17h às 19h)</li>
+                <li>👨‍👩‍👧‍👦 Menu Família: Desconto especial para grupos</li>
+                <li>🎂 Aniversariantes: Sobremesa grátis no dia do aniversário</li>
+                <li>💳 Cartão Fidelidade: Acumule pontos e ganhe descontos</li>
+            </ul>
+        </div>
+        
+        <div class="contact-section">
+            <h2 class="contact-title">Entre em Contato</h2>
+            <div class="contact-info">
+                <p>📱 <a href="https://wa.me/258866036384">WhatsApp: +258 866 036 384</a></p>
+                <p>📧 <a href="mailto:vuchada@gmail.com">vuchada@gmail.com</a></p>
+                <p>📍 Gurúè, Província da Zambézia, Moçambique</p>
+                <p>🕒 Segunda a Domingo: 11h às 22h</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu functionality
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        hamburger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuchada - Gerenciar Pedidos</title>
+    <script src="/config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .controls {
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .controls-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 150px;
+        }
+
+        .refresh-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .new-order-btn {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+                .new-order-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+
+        .orders {
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-id {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .order-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pendente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-preparando {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-pronto {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-finalizado {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-cancelado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-info {
+            margin-bottom: 1rem;
+        }
+
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .order-info-label {
+            color: #666;
+        }
+
+        .order-info-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .order-total {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: right;
+            margin: 1rem 0;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-preparando {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-pronto {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-finalizado {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-cancelado {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-detalhes {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-status {
+            background: linear-gradient(135deg, #FF8C00, #FFA500);
+            color: white;
+        }
+
+        .btn-pagar {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-vender {
+            background: linear-gradient(135deg, #fd7e14, #ff8c00);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        .action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .no-orders {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Modal de detalhes */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            margin: 0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .order-items {
+            margin: 1rem 0;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .item-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .item-total {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        @media (max-width: 768px) {
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-select {
+                min-width: auto;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+
+            .status-modal-content {
+                width: 95%;
+            }
+
+            .confirm-modal-content {
+                width: 95%;
+            }
+
+            .header-content {
+                gap: 1rem;
+                justify-content: flex-start;
+            }
+
+            .title {
+                margin-left: 1rem;
+                text-align: left;
+            }
+
+            .user-info {
+                margin-left: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-content {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+
+            .back-btn {
+                position: static;
+                transform: none;
+                order: 0;
+            }
+
+            .title {
+                font-size: 1rem;
+                order: 1;
+                margin-left: 0.5rem;
+                flex: 1;
+            }
+
+            .user-info {
+                justify-content: flex-end;
+                width: auto;
+                order: 2;
+                gap: 0.5rem;
+            }
+
+            .user-name {
+                max-width: 100px;
+                font-size: 0.8rem;
+                text-align: right;
+            }
+
+            .header {
+                padding: 0;
+            }
+
+            .order-card {
+                padding: 1rem;
+            }
+
+            .order-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .status-modal-content {
+                width: 95%;
+            }
+
+            .confirm-modal-content {
+                width: 95%;
+            }
+        }
+
+        /* Modal para status */
+        .status-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .status-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            margin: 0;
+        }
+
+        .status-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-close {
+            color: #aaa;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .status-close:hover {
+            color: #000;
+        }
+
+        .status-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .status-option {
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .status-option:hover {
+            border-color: #FF8C00;
+            background-color: #fff8f0;
+        }
+
+        .status-option.pendente { border-color: #ffc107; }
+        .status-option.preparando { border-color: #17a2b8; }
+        .status-option.pronto { border-color: #28a745; }
+        .status-option.entregue { border-color: #6c757d; }
+        .status-option.cancelado { border-color: #dc3545; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        .toast.success {
+            background: #4CAF50;
+        }
+
+        /* Modal de confirmação */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .confirm-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            margin: 0;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .confirm-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-yes {
+            background: #dc3545;
+            color: white;
+        }
+
+        .confirm-no {
+            background: #6c757d;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Estilos para o modal de pagamento */
+        .payment-content {
+            padding: 1rem 0;
+        }
+
+        .payment-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .payment-value {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .payment-method {
+            margin-bottom: 1rem;
+        }
+
+        .payment-method label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .payment-method select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .cash-fields {
+            background: #fff3cd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #ffeaa7;
+        }
+
+        .cash-fields input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .payment-error {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+        }
+
+        .btn-confirm {
+            background: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <button class="back-btn" onclick="window.location.href='/'">←</button>
+            <div class="title">Gerenciar Pedidos</div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Carregando...</span>
+                <button class="logout-btn" onclick="logout()">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="controls-content">
+            <select class="filter-select" id="statusFilter" onchange="loadOrders()">
+                <option value="">Todos os Status</option>
+                <option value="pendente">Pendente</option>
+                <option value="preparando">Preparando</option>
+                <option value="pronto">Pronto</option>
+                <option value="entregue">Entregue</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+            
+            <button class="refresh-btn" onclick="loadOrders()">
+                🔄 Atualizar
+            </button>
+            <button class="new-order-btn" onclick="window.location.href='/cliente'">
+                ➕ Novo Pedido
+            </button>
+            <button class="admin-btn" onclick="openAdminMenu()" id="adminBtn" style="display: none;">
+                👑 Admin
+            </button>
+        </div>
+    </div>
+
+    <div class="orders">
+        <div class="orders-grid" id="ordersGrid">
+            <div class="loading">Carregando pedidos...</div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal de confirmação -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <h3>Confirmar Saída</h3>
+            <p>Deseja realmente sair do sistema?</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" onclick="confirmLogout()">Sim, Sair</button>
+                <button class="confirm-btn confirm-no" onclick="closeConfirmModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Detalhes do Pedido</h2>
+                <span class="close" onclick="closeDetails()">&times;</span>
+            </div>
+            
+            <div id="orderDetails">
+                <!-- Detalhes do pedido serão inseridos aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💳 Pagamento</h2>
+                <span class="close" onclick="closePaymentModal()">&times;</span>
+            </div>
+            
+            <div class="payment-content">
+                <div class="payment-info">
+                    <div class="payment-row">
+                        <span class="payment-label">Pedido:</span>
+                        <span id="paymentOrderId" class="payment-value"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="payment-label">Total:</span>
+                        <span id="paymentTotal" class="payment-value"></span>
+                    </div>
+                </div>
+                
+                <div class="payment-method">
+                    <label for="paymentMethod">Método de Pagamento:</label>
+                    <select id="paymentMethod" onchange="toggleCashFields()">
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="emola">e-Mola</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="ponto24">Ponto24</option>
+                    </select>
+                </div>
+                
+                <div id="cashFields" class="cash-fields">
+                    <div class="payment-row">
+                        <label for="amountPaid">Valor Pago:</label>
+                        <input type="number" id="amountPaid" step="0.01" oninput="calculateChange()" placeholder="0.00">
+                    </div>
+                    <div class="payment-row">
+                        <span class="payment-label">Troco:</span>
+                        <span id="changeAmount" class="payment-value">0.00 MT</span>
+                    </div>
+                    <div id="paymentError" class="payment-error"></div>
+                </div>
+                
+                <div class="payment-actions">
+                    <button class="action-btn btn-cancel" onclick="closePaymentModal()">Cancelar</button>
+                    <button class="action-btn btn-confirm" onclick="confirmPayment()">Confirmar Pagamento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Venda (Finalizar Venda) -->
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💰 Finalizar Venda</h2>
+                <span class="close" onclick="closeSaleModal()">&times;</span>
+            </div>
+            
+            <div class="payment-content">
+                <div class="payment-info">
+                    <div class="payment-row">
+                        <span class="payment-label">Pedido:</span>
+                        <span id="saleOrderId" class="payment-value"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="payment-label">Total:</span>
+                        <span id="saleTotal" class="payment-value"></span>
+                    </div>
+                </div>
+                
+                <div class="payment-method">
+                    <label for="salePaymentMethod">Método de Pagamento:</label>
+                    <select id="salePaymentMethod" onchange="toggleSaleCashFields()">
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="emola">e-Mola</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="ponto24">Ponto24</option>
+                    </select>
+                </div>
+                
+                <div id="saleCashFields" class="cash-fields">
+                    <div class="payment-row">
+                        <label for="saleAmountPaid">Valor Pago:</label>
+                        <input type="number" id="saleAmountPaid" step="0.01" oninput="calculateSaleChange()" placeholder="0.00">
+                    </div>
+                    <div class="payment-row">
+                        <span class="payment-label">Troco:</span>
+                        <span id="saleChangeAmount" class="payment-value">0.00 MT</span>
+                    </div>
+                    <div id="saleError" class="payment-error"></div>
+                </div>
+                
+                <div class="payment-actions">
+                    <button class="action-btn btn-cancel" onclick="closeSaleModal()">Cancelar</button>
+                    <button class="action-btn btn-confirm" onclick="confirmSale()">Finalizar Venda</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let orders = [];
+
+        // Carregar pedidos
+        async function loadOrders() {
+            try {
+                const statusFilter = document.getElementById('statusFilter').value;
+                let url = API_CONFIG.getUrl('/api/pedidos');
+                
+                if (statusFilter) {
+                    url += `?status=${statusFilter}`;
+                }
+                
+                console.log('🔍 Carregando pedidos de:', url);
+                const response = await fetch(url);
+                console.log('📡 Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                orders = await response.json();
+                console.log('📊 Pedidos recebidos:', orders);
+                renderOrders();
+            } catch (error) {
+                console.error('❌ Erro ao carregar pedidos:', error);
+                document.getElementById('ordersGrid').innerHTML = 
+                    '<div class="loading">Erro ao carregar pedidos: ' + error.message + '</div>';
+            }
+        }
+
+        // Renderizar pedidos
+        function renderOrders() {
+            const container = document.getElementById('ordersGrid');
+            console.log('🎨 Renderizando pedidos:', orders);
+            
+            if (!Array.isArray(orders)) {
+                console.error('❌ Orders não é um array:', orders);
+                container.innerHTML = '<div class="no-orders">Erro: dados inválidos</div>';
+                return;
+            }
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="no-orders">Nenhum pedido encontrado</div>';
+                return;
+            }
+            
+            container.innerHTML = orders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Pedido #${order.id}</div>
+                        <div class="order-status status-${order.status}">${order.status}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-row">
+                            <span class="order-info-label">Mesa:</span>
+                            <span class="order-info-value">${order.table_name}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="order-info-label">Data/Hora:</span>
+                            <span class="order-info-value">${formatDateTime(order.created_at)}</span>
+                        </div>
+                        ${order.observations ? `
+                            <div class="order-info-row">
+                                <span class="order-info-label">Observações:</span>
+                                <span class="order-info-value">${order.observations}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="order-total">
+                        Total: ${order.total_formatted}
+                    </div>
+                    
+                    <div class="order-actions">
+                        <button class="action-btn btn-detalhes" onclick="showDetails(${order.id})">
+                            📋 Detalhes
+                        </button>
+                        
+                        ${getStatusButtons(order)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Obter botões de status baseado no status atual
+        function getStatusButtons(order) {
+            const buttons = [];
+            
+            switch (order.status) {
+                case 'pendente':
+                case 'preparando':
+                    buttons.push(`
+                        <button class="action-btn btn-status" onclick="openStatusModal(${order.id})">
+                            🔄 Alterar Status
+                        </button>
+                        <button class="action-btn btn-vender" onclick="openSaleModal(${order.id})">
+                            💰 Finalizar Venda
+                        </button>
+                    `);
+                    break;
+                    
+                case 'pronto':
+                    buttons.push(`
+                        <button class="action-btn btn-status" onclick="openStatusModal(${order.id})">
+                            🔄 Alterar Status
+                        </button>
+                        <button class="action-btn btn-pagar" onclick="openPaymentModal(${order.id})">
+                            💳 Pagar
+                        </button>
+                    `);
+                    break;
+                    
+                case 'entregue':
+                case 'cancelado':
+                    buttons.push(`
+                        <button class="action-btn" disabled>
+                            ${order.status === 'entregue' ? '✅ Entregue' : '❌ Cancelado'}
+                        </button>
+                    `);
+                    break;
+            }
+            
+            return buttons.join('');
+        }
+
+        // Variáveis para o modal de status
+        let currentOrderId = null;
+
+        // Abrir modal de status
+        function openStatusModal(orderId) {
+            currentOrderId = orderId;
+            document.getElementById('statusModal').classList.add('show'); // Use flex
+        }
+
+        // Fechar modal de status
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('show');
+            currentOrderId = null;
+        }
+
+        // Alterar status do pedido
+        async function changeStatus(newStatus) {
+            if (!currentOrderId) return;
+            
+            try {
+                const response = await fetch(API_CONFIG.getUrl(`/api/pedido/${currentOrderId}/status`), {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`Status alterado para: ${newStatus}`, 'success');
+                    closeStatusModal();
+                    loadOrders(); // Recarregar pedidos
+                } else {
+                    showToast(`Erro: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao alterar status. Tente novamente.', 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+        // Função para mostrar toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Variáveis para o modal de pagamento
+        let currentPaymentOrder = null;
+
+        // Abrir modal de pagamento
+        function openPaymentModal(orderId) {
+            currentPaymentOrder = orders.find(o => o.id === orderId);
+            if (!currentPaymentOrder) return;
+            
+            document.getElementById('paymentOrderId').textContent = `#${currentPaymentOrder.id}`;
+            document.getElementById('paymentTotal').textContent = currentPaymentOrder.total_formatted;
+            document.getElementById('amountPaid').value = '';
+            document.getElementById('changeAmount').textContent = '0.00 MT';
+            document.getElementById('paymentError').style.display = 'none';
+            
+            toggleCashFields();
+            document.getElementById('paymentModal').classList.add('show');
+        }
+
+        // Fechar modal de pagamento
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+            currentPaymentOrder = null;
+        }
+
+        // Alternar campos de dinheiro
+        function toggleCashFields() {
+            const method = document.getElementById('paymentMethod').value;
+            const cashFields = document.getElementById('cashFields');
+            
+            if (method === 'dinheiro') {
+                cashFields.style.display = 'block';
+            } else {
+                cashFields.style.display = 'none';
+            }
+        }
+
+        // Calcular troco
+        function calculateChange() {
+            if (!currentPaymentOrder) return;
+            
+            const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const total = parseFloat(currentPaymentOrder.total);
+            const change = amountPaid - total;
+            
+            document.getElementById('changeAmount').textContent = `${change.toFixed(2)} MT`;
+            
+            const errorElement = document.getElementById('paymentError');
+            if (amountPaid < total) {
+                errorElement.textContent = 'Valor insuficiente!';
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        // Confirmar pagamento
+        async function confirmPayment() {
+            if (!currentPaymentOrder) return;
+            
+            const method = document.getElementById('paymentMethod').value;
+            const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const total = parseFloat(currentPaymentOrder.total);
+            
+            // Validar pagamento em dinheiro
+            if (method === 'dinheiro' && amountPaid < total) {
+                document.getElementById('paymentError').textContent = 'Valor insuficiente!';
+                document.getElementById('paymentError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_CONFIG.getUrl(`/api/pedido/${currentPaymentOrder.id}/pagar`), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payment_method: method,
+                        amount_paid: amountPaid
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Pagamento realizado com sucesso!', 'success');
+                    closePaymentModal();
+                    loadOrders(); // Recarregar pedidos
+                } else {
+                    showToast(`Erro: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao processar pagamento. Tente novamente.', 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+        // Variáveis para o modal de venda
+        let currentSaleOrder = null;
+
+        // Abrir modal de venda
+        function openSaleModal(orderId) {
+            currentSaleOrder = orders.find(o => o.id === orderId);
+            if (!currentSaleOrder) return;
+            
+            document.getElementById('saleOrderId').textContent = `#${currentSaleOrder.id}`;
+            document.getElementById('saleTotal').textContent = currentSaleOrder.total_formatted;
+            document.getElementById('saleAmountPaid').value = '';
+            document.getElementById('saleChangeAmount').textContent = '0.00 MT';
+            document.getElementById('saleError').style.display = 'none';
+            
+            toggleSaleCashFields();
+            document.getElementById('saleModal').classList.add('show');
+        }
+
+        // Fechar modal de venda
+        function closeSaleModal() {
+            document.getElementById('saleModal').classList.remove('show');
+            currentSaleOrder = null;
+        }
+
+        // Alternar campos de dinheiro para venda
+        function toggleSaleCashFields() {
+            const method = document.getElementById('salePaymentMethod').value;
+            const cashFields = document.getElementById('saleCashFields');
+            
+            if (method === 'dinheiro') {
+                cashFields.style.display = 'block';
+            } else {
+                cashFields.style.display = 'none';
+            }
+        }
+
+        // Calcular troco para venda
+        function calculateSaleChange() {
+            if (!currentSaleOrder) return;
+            
+            const amountPaid = parseFloat(document.getElementById('saleAmountPaid').value) || 0;
+            const total = parseFloat(currentSaleOrder.total);
+            const change = amountPaid - total;
+            
+            document.getElementById('saleChangeAmount').textContent = `${change.toFixed(2)} MT`;
+            
+            const errorElement = document.getElementById('saleError');
+            if (amountPaid < total) {
+                errorElement.textContent = 'Valor insuficiente!';
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        // Confirmar venda (finalizar venda)
+        async function confirmSale() {
+            if (!currentSaleOrder) return;
+            
+            const method = document.getElementById('salePaymentMethod').value;
+            const amountPaid = parseFloat(document.getElementById('saleAmountPaid').value) || 0;
+            const total = parseFloat(currentSaleOrder.total);
+            
+            // Validar pagamento em dinheiro
+            if (method === 'dinheiro' && amountPaid < total) {
+                document.getElementById('saleError').textContent = 'Valor insuficiente!';
+                document.getElementById('saleError').style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_CONFIG.getUrl(`/api/pedido/${currentSaleOrder.id}/finalizar-venda`), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payment_method: method,
+                        amount_paid: amountPaid
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Venda finalizada com sucesso!', 'success');
+                    closeSaleModal();
+                    loadOrders(); // Recarregar pedidos
+                } else {
+                    showToast(`Erro: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao finalizar venda. Tente novamente.', 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+
+        // Mostrar detalhes do pedido
+        async function showDetails(orderId) {
+            try {
+                const response = await fetch(API_CONFIG.getUrl(`/api/pedido/${orderId}/itens`));
+                const items = await response.json();
+                
+                const order = orders.find(o => o.id === orderId);
+                
+                document.getElementById('orderDetails').innerHTML = `
+                    <div class="order-info">
+                        <div class="order-info-row">
+                            <span class="order-info-label">Pedido:</span>
+                            <span class="order-info-value">#${order.id}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="order-info-label">Mesa:</span>
+                            <span class="order-info-value">${order.table_name}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="order-info-label">Status:</span>
+                            <span class="order-info-value">${order.status}</span>
+                        </div>
+                        <div class="order-info-row">
+                            <span class="order-info-label">Data/Hora:</span>
+                            <span class="order-info-value">${formatDateTime(order.created_at)}</span>
+                        </div>
+                        ${order.observations ? `
+                            <div class="order-info-row">
+                                <span class="order-info-label">Observações:</span>
+                                <span class="order-info-value">${order.observations}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="order-items">
+                        <h3>Itens do Pedido:</h3>
+                        ${items.map(item => `
+                            <div class="order-item">
+                                <div class="item-info">
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-details">
+                                        ${item.quantity}x ${item.unit_price_formatted}
+                                    </div>
+                                </div>
+                                <div class="item-total">
+                                    ${item.total_formatted}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="order-total">
+                        Total: ${order.total_formatted}
+                    </div>
+                `;
+                
+                document.getElementById('detailsModal').classList.add('show'); // Use flex
+            } catch (error) {
+                showToast('Erro ao carregar detalhes do pedido.', 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+        // Fechar modal de detalhes
+        function closeDetails() {
+            document.getElementById('detailsModal').classList.remove('show');
+        }
+
+        // Formatar data/hora
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('pt-BR');
+        }
+
+        // Logout
+        function logout() {
+            document.getElementById('confirmModal').classList.add('show'); // Use flex
+        }
+
+        // Fechar modal de confirmação
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+
+        // Confirmar logout
+        function confirmLogout() {
+            window.location.href = '/logout';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const detailsModal = document.getElementById('detailsModal');
+            const statusModal = document.getElementById('statusModal');
+            const confirmModal = document.getElementById('confirmModal');
+            
+            if (event.target === detailsModal) {
+                closeDetails();
+            }
+            if (evenpizt.target === statusModal) {
+                closeStatusModal();
+            }
+            if (event.target === confirmModal) {
+                closeConfirmModal();
+            }
+        }
+
+        // Auto-refresh a cada 60 segundos (reduzido para evitar muitas requisições)
+        setInterval(loadOrders, 60000);
+
+        // Carregar informações do usuário
+        async function loadUserInfo() {
+            try {
+                const response = await fetch(API_CONFIG.getUrl('/api/user-info'));
+                const userInfo = await response.json();
+                if (userInfo.logged_in) {
+                    document.getElementById('userName').textContent = userInfo.name;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar informações do usuário:', error);
+            }
+        }
+
+        // Inicializar
+        loadOrders();
+        loadUserInfo();
+    </script>
+
+    <!-- Modal para alterar status -->
+    <div id="statusModal" class="status-modal">
+        <div class="status-modal-content">
+            <div class="status-modal-header">
+                <h3>Alterar Status do Pedido</h3>
+                <span class="status-close" onclick="closeStatusModal()">&times;</span>
+            </div>
+            <div class="status-options">
+                <div class="status-option pendente" onclick="changeStatus('pendente')">Pendente</div>
+                <div class="status-option preparando" onclick="changeStatus('preparando')">Preparando</div>
+                <div class="status-option pronto" onclick="changeStatus('pronto')">Pronto</div>
+                <div class="status-option entregue" onclick="changeStatus('entregue')">Entregue</div>
+                <div class="status-option cancelado" onclick="changeStatus('cancelado')">Cancelado</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
