@@ -246,18 +246,23 @@
     try {
       if (!elMesaSelect) return;
       elMesaSelect.innerHTML = `<option value="">Carregando mesas...</option>`;
-      const mesas = await fetchJson("/mesas/");
+      const mesas = await fetchJson("/public/mesas");
       if (!Array.isArray(mesas) || !mesas.length) {
         elMesaSelect.innerHTML = `<option value="">Nenhuma mesa disponível</option>`;
         return;
       }
+      const mesasFiltradas = mesas
+        .filter((m) => m && m.id != null)
+        // Mesa 0 é usada como balcão/sistema e não deve aparecer no online
+        .filter((m) => Number(m.numero) !== 0)
+        .sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0));
       mesasIndex = new Map();
-      mesas.forEach((m) => {
-        if (m && m.id != null) mesasIndex.set(String(m.id), m);
+      mesasFiltradas.forEach((m) => {
+        mesasIndex.set(String(m.id), m);
       });
       elMesaSelect.innerHTML =
         `<option value="">Selecione...</option>` +
-        mesas
+        mesasFiltradas
           .map((m) => `<option value="${m.id}">Mesa ${m.numero}</option>`)
           .join("");
     } catch (e) {
