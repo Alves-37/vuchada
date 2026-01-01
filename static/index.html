@@ -45,6 +45,15 @@
             animation: pulse 2s infinite;
         }
 
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            background: #000;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -462,15 +471,19 @@
             }
        
     </style>
+    <link rel="icon" type="image/png" href="../assets/vuchada.png">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="logo" onclick="window.location.href='./index.html'" style="cursor: pointer;">
-            🍽️ Vuchada
+            <img src="../assets/vuchada.png" alt="Vuchada" class="logo-img">
+            <span>Vuchada</span>
         </div>
+        
+        <!-- Desktop Navigation -->
         <nav class="nav-buttons">
-            <a href="./servicos.html" class="nav-btn">Serviços</a>
+            <a href="./cliente.html" class="nav-btn">Cardápio</a>
             <a href="./sobre.html" class="nav-btn">Sobre</a>
         </nav>
         <div class="hamburger" id="hamburger">
