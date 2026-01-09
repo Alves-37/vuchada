@@ -212,8 +212,7 @@
       categorias = [];
       renderCategorias();
     } catch (e) {
-      // Mesmo com erro, não bloquear UI
-      renderCategorias();
+      setError(elCategories, "Erro ao carregar categorias");
     }
   }
 
@@ -227,15 +226,25 @@
       const path = `/public/menu/produtos${params.toString() ? "?" + params.toString() : ""}`;
       const raw = await fetchJson(path);
       // Normalizar schema do FastAPI ProdutoOut -> esperado pelo UI
-      produtos = (Array.isArray(raw) ? raw : []).map((p) => ({
-        id: p.id,
-        name: p.nome,
-        description: p.descricao,
-        price: p.preco_venda,
-        image_url: p.imagem,
-        stock: p.estoque,
-      }));
-      if (!Array.isArray(produtos)) produtos = [];
+      produtos = (Array.isArray(raw) ? raw : [])
+        .map((p) => ({
+          id: p.id,
+          name: p.nome,
+          description: p.descricao,
+          price: p.preco_venda,
+          image_url: p.imagem,
+          stock: p.estoque,
+        }))
+        .filter((p) => p && p.id != null);
+
+      // Evita duplicação visual caso API retorne itens repetidos
+      const uniqueById = new Map();
+      produtos.forEach((p) => {
+        const key = String(p.id);
+        if (!uniqueById.has(key)) uniqueById.set(key, p);
+      });
+      produtos = Array.from(uniqueById.values());
+
       renderProdutos();
     } catch (e) {
       setError(elProductsGrid, `Erro ao carregar produtos: ${e.message}`);
