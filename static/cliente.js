@@ -14,6 +14,9 @@
   const elOrderForm = document.getElementById("orderForm");
   const elSubmitOrderBtn = document.getElementById("submitOrderBtn");
   const elOrderStatus = document.getElementById("orderStatus");
+  const elTrackOrderBtn = document.getElementById("trackOrderBtn");
+  const elOrderTrackModal = document.getElementById("orderTrackModal");
+  const elOrderTrackBody = document.getElementById("orderTrackBody");
 
   let categorias = [];
   let produtos = [];
@@ -27,6 +30,31 @@
     return `${API_BASE_URL}${path}`;
   }
 
+  function openOrderTracking() {
+    if (!elOrderTrackModal) return;
+    elOrderTrackModal.style.display = "block";
+  }
+
+  function closeOrderTracking() {
+    if (!elOrderTrackModal) return;
+    elOrderTrackModal.style.display = "none";
+  }
+
+  function clearOrderTracking() {
+    try {
+      localStorage.removeItem("last_pedido_uuid");
+    } catch (e) {
+      // ignore
+    }
+    if (orderPollTimer) {
+      clearInterval(orderPollTimer);
+      orderPollTimer = null;
+    }
+    if (elOrderTrackBody) elOrderTrackBody.textContent = "";
+    if (elTrackOrderBtn) elTrackOrderBtn.style.display = "none";
+    closeOrderTracking();
+  }
+
   function startOrderTracking(pedidoUuid) {
     try {
       if (!pedidoUuid) return;
@@ -37,6 +65,8 @@
 
       const uuid = String(pedidoUuid);
       localStorage.setItem("last_pedido_uuid", uuid);
+      if (elTrackOrderBtn) elTrackOrderBtn.style.display = "inline-flex";
+      openOrderTracking();
 
       const tick = async () => {
         try {
@@ -47,6 +77,12 @@
               elOrderStatus.style.display = "block";
               elOrderStatus.className = "order-status";
               elOrderStatus.textContent = `Status do pedido: ${data.status}`;
+            }
+
+            if (elOrderTrackBody) {
+              const idText = data.pedido_id != null ? `#${data.pedido_id}` : "";
+              const when = data.updated_at ? `Atualizado: ${String(data.updated_at)}` : "";
+              elOrderTrackBody.textContent = `Pedido ${idText} - Status: ${data.status}${when ? "\n" + when : ""}`;
             }
           }
         } catch (e) {
@@ -447,6 +483,9 @@
   window.closeCart = closeCart;
   window.submitOrder = submitOrder;
   window.closeAppModal = closeAppModal;
+  window.openOrderTracking = openOrderTracking;
+  window.closeOrderTracking = closeOrderTracking;
+  window.clearOrderTracking = clearOrderTracking;
 
   document.addEventListener("click", (e) => {
     const btn = e.target;

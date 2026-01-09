@@ -21,6 +21,9 @@
         <button class="cart-btn" onclick="openCart()">
             🛒 <span class="cart-count" id="cartCount">0</span>
         </button>
+        <button class="cart-btn" id="trackOrderBtn" style="display: none; margin-top: 10px;" onclick="openOrderTracking()">
+            📦 Acompanhar
+        </button>
     </div>
 
     <div class="search-container">
@@ -87,6 +90,22 @@
             <div id="appModalBody" class="app-modal-body"></div>
             <div class="app-modal-actions">
                 <button class="app-modal-btn" type="button" onclick="closeAppModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="orderTrackModal" class="app-modal" style="display: none;">
+        <div class="app-modal-content" role="dialog" aria-modal="true" aria-labelledby="orderTrackTitle">
+            <div class="app-modal-header">
+                <div id="orderTrackTitle" class="app-modal-title">Acompanhar pedido</div>
+                <button class="app-modal-close" type="button" onclick="closeOrderTracking()">×</button>
+            </div>
+            <div class="app-modal-body">
+                <div id="orderTrackBody"></div>
+            </div>
+            <div class="app-modal-actions">
+                <button class="app-modal-btn" type="button" onclick="clearOrderTracking()">Limpar</button>
+                <button class="app-modal-btn" type="button" onclick="closeOrderTracking()">Fechar</button>
             </div>
         </div>
     </div>
