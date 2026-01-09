@@ -64,9 +64,10 @@
     closeOrderTracking();
   }
 
-  function startOrderTracking(pedidoUuid) {
+  function startOrderTracking(pedidoUuid, opts) {
     try {
       if (!pedidoUuid) return;
+      const shouldOpen = !!(opts && opts.openModal);
       if (orderPollTimer) {
         clearInterval(orderPollTimer);
         orderPollTimer = null;
@@ -75,7 +76,7 @@
       const uuid = String(pedidoUuid);
       localStorage.setItem("last_pedido_uuid", uuid);
       if (elTrackOrderBtn) elTrackOrderBtn.style.display = "inline-flex";
-      openOrderTracking();
+      if (shouldOpen) openOrderTracking();
 
       const tick = async () => {
         try {
@@ -91,8 +92,32 @@
             const els = getOrderTrackEls();
             if (els.elOrderTrackBody) {
               const idText = data.pedido_id != null ? `#${data.pedido_id}` : "";
-              const when = data.updated_at ? `Atualizado: ${String(data.updated_at)}` : "";
-              els.elOrderTrackBody.textContent = `Pedido ${idText} - Status: ${data.status}${when ? "\n" + when : ""}`;
+              const rel = formatRelativeTime(data.updated_at);
+              const updatedLine = rel ? `Atualizado ${rel}` : "";
+              const totalLine = data.valor_total != null ? `Total: ${formatMt(data.valor_total)}` : "";
+
+              let itensHtml = "";
+              if (Array.isArray(data.itens) && data.itens.length) {
+                itensHtml =
+                  "<div style=\"margin-top:10px; font-weight:600;\">Itens</div>" +
+                  "<div style=\"margin-top:6px;\">" +
+                  data.itens
+                    .map((it) => {
+                      const nome = escapeHtml(it.produto_nome || "Produto");
+                      const qtd = Number(it.quantidade || 0);
+                      const subtotal = it.subtotal != null ? formatMt(it.subtotal) : "";
+                      return `<div style=\"display:flex; justify-content:space-between; gap:10px; padding:4px 0;\"><div>${qtd}x ${nome}</div><div>${escapeHtml(subtotal)}</div></div>`;
+                    })
+                    .join("") +
+                  "</div>";
+              }
+
+              els.elOrderTrackBody.innerHTML =
+                `<div style=\"font-weight:700;\">Pedido ${escapeHtml(idText)}</div>` +
+                `<div style=\"margin-top:6px;\">Status: <b>${escapeHtml(data.status)}</b></div>` +
+                (updatedLine ? `<div style=\"margin-top:6px; color:#6b7280;\">${escapeHtml(updatedLine)}</div>` : "") +
+                (totalLine ? `<div style=\"margin-top:10px;\"><b>${escapeHtml(totalLine)}</b></div>` : "") +
+                itensHtml;
             }
           }
         } catch (e) {
@@ -151,6 +176,36 @@
   function formatMt(v) {
     const n = Number(v || 0);
     return `${n.toFixed(2).replace(".", ",")} MT`;
+  }
+
+  function formatRelativeTime(iso) {
+    try {
+      if (!iso) return "";
+      const d = new Date(String(iso));
+      const t = d.getTime();
+      if (!Number.isFinite(t)) return "";
+      const diffMs = Date.now() - t;
+      const diffSec = Math.floor(diffMs / 1000);
+      if (diffSec < 10) return "agora";
+      if (diffSec < 60) return `há ${diffSec}s`;
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `há ${diffMin} min`;
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) return `há ${diffH} h`;
+      const diffD = Math.floor(diffH / 24);
+      return `há ${diffD} d`;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   // NOTE: keep this string safe for inline HTML attributes (no raw quotes)
@@ -446,7 +501,7 @@
       console.log("[CARDAPIO] Resposta do servidor:", res);
       if (res && res.pedido_id) {
         setOrderUiState("success", "Pedido Nº " + res.pedido_id + " já foi enviado");
-        if (res.pedido_uuid) startOrderTracking(res.pedido_uuid);
+        if (res.pedido_uuid) startOrderTracking(res.pedido_uuid, { openModal: true });
         cart = [];
         renderCart();
         setTimeout(() => {
@@ -527,6 +582,7 @@
     loadProdutos();
     updateCartBadge();
     const lastUuid = localStorage.getItem("last_pedido_uuid");
-    if (lastUuid) startOrderTracking(lastUuid);
+    // Ao voltar ao cardápio, manter acompanhamento em background, mas NÃO abrir modal automaticamente.
+    if (lastUuid) startOrderTracking(lastUuid, { openModal: false });
   });
 })();
