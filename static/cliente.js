@@ -20,10 +20,45 @@
   let selectedCategoriaId = "todos";
   let cart = [];
   let mesasIndex = new Map();
+  let orderPollTimer = null;
 
   function apiUrl(path) {
     if (!path.startsWith("/")) path = "/" + path;
     return `${API_BASE_URL}${path}`;
+  }
+
+  function startOrderTracking(pedidoUuid) {
+    try {
+      if (!pedidoUuid) return;
+      if (orderPollTimer) {
+        clearInterval(orderPollTimer);
+        orderPollTimer = null;
+      }
+
+      const uuid = String(pedidoUuid);
+      localStorage.setItem("last_pedido_uuid", uuid);
+
+      const tick = async () => {
+        try {
+          const data = await fetchJson(`/public/pedidos/uuid/${encodeURIComponent(uuid)}`);
+          if (data && data.status) {
+            setOrderUiState("idle", "");
+            if (elOrderStatus) {
+              elOrderStatus.style.display = "block";
+              elOrderStatus.className = "order-status";
+              elOrderStatus.textContent = `Status do pedido: ${data.status}`;
+            }
+          }
+        } catch (e) {
+          // ignore polling errors
+        }
+      };
+
+      tick();
+      orderPollTimer = setInterval(tick, 4000);
+    } catch (e) {
+      // ignore
+    }
   }
 
   class AppHttpError extends Error {
@@ -365,6 +400,7 @@
       console.log("[CARDAPIO] Resposta do servidor:", res);
       if (res && res.pedido_id) {
         setOrderUiState("success", "Pedido Nº " + res.pedido_id + " já foi enviado");
+        if (res.pedido_uuid) startOrderTracking(res.pedido_uuid);
         cart = [];
         renderCart();
         setTimeout(() => {
@@ -441,5 +477,7 @@
     loadCategorias();
     loadProdutos();
     updateCartBadge();
+    const lastUuid = localStorage.getItem("last_pedido_uuid");
+    if (lastUuid) startOrderTracking(lastUuid);
   });
 })();
