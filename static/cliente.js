@@ -15,8 +15,8 @@
   const elSubmitOrderBtn = document.getElementById("submitOrderBtn");
   const elOrderStatus = document.getElementById("orderStatus");
   const elTrackOrderBtn = document.getElementById("trackOrderBtn");
-  const elOrderTrackModal = document.getElementById("orderTrackModal");
-  const elOrderTrackBody = document.getElementById("orderTrackBody");
+  let elOrderTrackModal = null;
+  let elOrderTrackBody = null;
 
   let categorias = [];
   let produtos = [];
@@ -30,14 +30,22 @@
     return `${API_BASE_URL}${path}`;
   }
 
+  function getOrderTrackEls() {
+    if (!elOrderTrackModal) elOrderTrackModal = document.getElementById("orderTrackModal");
+    if (!elOrderTrackBody) elOrderTrackBody = document.getElementById("orderTrackBody");
+    return { elOrderTrackModal, elOrderTrackBody };
+  }
+
   function openOrderTracking() {
-    if (!elOrderTrackModal) return;
-    elOrderTrackModal.style.display = "block";
+    const els = getOrderTrackEls();
+    if (!els.elOrderTrackModal) return;
+    els.elOrderTrackModal.style.display = "block";
   }
 
   function closeOrderTracking() {
-    if (!elOrderTrackModal) return;
-    elOrderTrackModal.style.display = "none";
+    const els = getOrderTrackEls();
+    if (!els.elOrderTrackModal) return;
+    els.elOrderTrackModal.style.display = "none";
   }
 
   function clearOrderTracking() {
@@ -50,7 +58,8 @@
       clearInterval(orderPollTimer);
       orderPollTimer = null;
     }
-    if (elOrderTrackBody) elOrderTrackBody.textContent = "";
+    const els = getOrderTrackEls();
+    if (els.elOrderTrackBody) els.elOrderTrackBody.textContent = "";
     if (elTrackOrderBtn) elTrackOrderBtn.style.display = "none";
     closeOrderTracking();
   }
@@ -79,10 +88,11 @@
               elOrderStatus.textContent = `Status do pedido: ${data.status}`;
             }
 
-            if (elOrderTrackBody) {
+            const els = getOrderTrackEls();
+            if (els.elOrderTrackBody) {
               const idText = data.pedido_id != null ? `#${data.pedido_id}` : "";
               const when = data.updated_at ? `Atualizado: ${String(data.updated_at)}` : "";
-              elOrderTrackBody.textContent = `Pedido ${idText} - Status: ${data.status}${when ? "\n" + when : ""}`;
+              els.elOrderTrackBody.textContent = `Pedido ${idText} - Status: ${data.status}${when ? "\n" + when : ""}`;
             }
           }
         } catch (e) {
