@@ -30,6 +30,34 @@
     return `${API_BASE_URL}${path}`;
   }
 
+  function getTenantSlug() {
+    try {
+      const qs = new URLSearchParams(window.location.search || "");
+      const fromQs = (qs.get("loja") || "").trim();
+      if (fromQs) return fromQs.toLowerCase();
+    } catch (e) {
+      // ignore
+    }
+    return "";
+  }
+
+  function getTenantId() {
+    try {
+      const qs = new URLSearchParams(window.location.search || "");
+      const fromQs = (qs.get("tenant_id") || "").trim();
+      if (fromQs) return fromQs;
+    } catch (e) {
+      // ignore
+    }
+    try {
+      const fromLs = (localStorage.getItem("tenant_id") || "").trim();
+      if (fromLs) return fromLs;
+    } catch (e) {
+      // ignore
+    }
+    return "";
+  }
+
   function getOrderTrackEls() {
     if (!elOrderTrackModal) elOrderTrackModal = document.getElementById("orderTrackModal");
     if (!elOrderTrackBody) elOrderTrackBody = document.getElementById("orderTrackBody");
@@ -159,7 +187,13 @@
   }
 
   async function fetchJson(path, opts) {
-    const res = await fetch(apiUrl(path), opts);
+    const tenantId = getTenantId();
+    const nextOpts = { ...(opts || {}) };
+    const nextHeaders = { ...((nextOpts.headers || {}) instanceof Headers ? Object.fromEntries(nextOpts.headers.entries()) : (nextOpts.headers || {})) };
+    if (tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
+    nextOpts.headers = nextHeaders;
+
+    const res = await fetch(apiUrl(path), nextOpts);
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       let json = null;
@@ -358,8 +392,11 @@
       const params = new URLSearchParams();
       const search = (elSearchInput?.value || "").trim();
       if (search) params.set("q", search);
+      const slug = getTenantSlug();
       // somente_disponiveis=true por padrão (menu)
-      const path = `/public/menu/produtos${params.toString() ? "?" + params.toString() : ""}`;
+      const path = slug
+        ? `/public/menu/${encodeURIComponent(slug)}/produtos${params.toString() ? "?" + params.toString() : ""}`
+        : `/public/menu/produtos${params.toString() ? "?" + params.toString() : ""}`;
       const raw = await fetchJson(path);
       // Normalizar schema do FastAPI ProdutoOut -> esperado pelo UI
       produtos = (Array.isArray(raw) ? raw : [])
