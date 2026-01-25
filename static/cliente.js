@@ -38,7 +38,7 @@
     } catch (e) {
       // ignore
     }
-    return "";
+    return "restaurante";
   }
 
   function getTenantId() {
@@ -170,30 +170,59 @@
     }
   }
 
-  const elAppModal = document.getElementById("appModal");
-  const elAppModalTitle = document.getElementById("appModalTitle");
-  const elAppModalBody = document.getElementById("appModalBody");
+  let elAppModal = null;
+  let elAppModalTitle = null;
+  let elAppModalBody = null;
+
+  function getAppModalEls() {
+    if (!elAppModal) elAppModal = document.getElementById("appModal");
+    if (!elAppModalTitle) elAppModalTitle = document.getElementById("appModalTitle");
+    if (!elAppModalBody) elAppModalBody = document.getElementById("appModalBody");
+    return { elAppModal, elAppModalTitle, elAppModalBody };
+  }
 
   function openAppModal(title, message) {
-    if (!elAppModal) return;
-    if (elAppModalTitle) elAppModalTitle.textContent = title || "Mensagem";
-    if (elAppModalBody) elAppModalBody.textContent = message || "";
-    elAppModal.style.display = "block";
+    const els = getAppModalEls();
+    if (!els.elAppModal) return;
+    if (els.elAppModalTitle) els.elAppModalTitle.textContent = title || "Mensagem";
+    if (els.elAppModalBody) els.elAppModalBody.textContent = message || "";
+    els.elAppModal.style.display = "block";
   }
 
   function closeAppModal() {
-    if (!elAppModal) return;
-    elAppModal.style.display = "none";
+    const els = getAppModalEls();
+    if (!els.elAppModal) return;
+    els.elAppModal.style.display = "none";
   }
 
   async function fetchJson(path, opts) {
+    const tenantSlug = getTenantSlug();
     const tenantId = getTenantId();
     const nextOpts = { ...(opts || {}) };
     const nextHeaders = { ...((nextOpts.headers || {}) instanceof Headers ? Object.fromEntries(nextOpts.headers.entries()) : (nextOpts.headers || {})) };
-    if (tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
+    if (!tenantSlug && tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
     nextOpts.headers = nextHeaders;
 
-    const res = await fetch(apiUrl(path), nextOpts);
+    const timeoutMs = Number(nextOpts.timeoutMs || 15000);
+    delete nextOpts.timeoutMs;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    nextOpts.signal = controller.signal;
+
+    let res;
+    try {
+      res = await fetch(apiUrl(path), nextOpts);
+    } catch (e) {
+      const name = e && typeof e === "object" ? e.name : "";
+      const msg = e && typeof e === "object" ? (e.message || "") : "";
+      if (name === "AbortError" || /aborted/i.test(String(msg))) {
+        throw new Error("Tempo esgotado ao carregar dados. Verifique se o backend (127.0.0.1:8000) está ligado.");
+      }
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       let json = null;
@@ -202,7 +231,8 @@
       } catch (e) {
         json = null;
       }
-      throw new AppHttpError(res.status, text || res.statusText, json);
+      const msg = (json && (json.detail || json.message)) ? (json.detail || json.message) : (text || `HTTP ${res.status}`);
+      throw new Error(msg);
     }
     return await res.json();
   }
@@ -358,7 +388,16 @@
             <div class="product-desc">${p.description || ""}</div>
             <div class="product-bottom">
               <div class="product-price">${formatMt(p.price)}</div>
-              <button class="add-btn" data-id="${p.id}">Adicionar</button>
+              <div class="product-actions">
+                <button class="details-btn" data-id="${p.id}" type="button" title="Detalhes" aria-label="Detalhes">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                </button>
+                <button class="add-btn" data-id="${p.id}" disabled>Adicionar</button>
+              </div>
             </div>
           </div>
         </div>
@@ -368,9 +407,24 @@
 
     elProductsGrid.querySelectorAll(".add-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (btn.disabled) return;
         const id = btn.getAttribute("data-id");
         const prod = produtos.find((x) => String(x.id) === String(id));
         if (prod) addToCart(prod);
+      });
+    });
+
+    elProductsGrid.querySelectorAll(".details-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const p = produtos.find((x) => String(x.id) === String(id));
+        if (!p) return;
+        const nome = p.name || "";
+        const desc = p.description || "";
+        const cat = p.category_name || "-";
+        const ativo = p.ativo === false ? "Não" : "Sim";
+        const msg = `Nome: ${nome}\nDescrição: ${desc || "-"}\nCategoria: ${cat}\nAtivo: ${ativo}`;
+        openAppModal("Detalhes do produto", msg);
       });
     });
   }
@@ -406,6 +460,9 @@
           description: p.descricao,
           price: p.preco_venda,
           image_url: p.imagem,
+          category_id: p.categoria_id,
+          category_name: p.categoria_nome,
+          ativo: p.ativo,
           stock: p.estoque,
         }))
         .filter((p) => p && p.id != null);
