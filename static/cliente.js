@@ -196,7 +196,10 @@
       tick();
       realPayTimer = setInterval(tick, 2500);
     } catch (e) {
-      setRealPayUi("error", "Erro ao iniciar checkout à distância.");
+      const msg = e && typeof e === "object" ? (e.message || "") : "";
+      const finalMsg = msg ? String(msg) : "Erro ao iniciar checkout à distância.";
+      setRealPayUi("error", finalMsg);
+      openAppModal("Erro", finalMsg);
     }
   }
 
