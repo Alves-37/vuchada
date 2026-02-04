@@ -10,6 +10,15 @@
   const elCartItems = document.getElementById("cartItems");
   const elCartTotal = document.getElementById("cartTotal");
   const elMesaSelect = document.getElementById("mesaSelect");
+  const elOrderTypeSelect = document.getElementById("orderTypeSelect");
+  const elMesaSelectionBlock = document.getElementById("mesaSelectionBlock");
+  const elDistanciaBlock = document.getElementById("distanciaBlock");
+  const elPayPushBlock = document.getElementById("payPushBlock");
+  const elDistanciaTipo = document.getElementById("distanciaTipo");
+  const elDistanciaNome = document.getElementById("distanciaNome");
+  const elDistanciaTelefone = document.getElementById("distanciaTelefone");
+  const elDistanciaEndereco = document.getElementById("distanciaEndereco");
+  const elDistanciaTaxa = document.getElementById("distanciaTaxa");
   const elSearchInput = document.getElementById("searchInput");
   const elOrderForm = document.getElementById("orderForm");
   const elSubmitOrderBtn = document.getElementById("submitOrderBtn");
@@ -17,6 +26,22 @@
   const elTrackOrderBtn = document.getElementById("trackOrderBtn");
   let elOrderTrackModal = null;
   let elOrderTrackBody = null;
+
+  const elMockPayBtn = document.getElementById("mockPayBtn");
+  const elMockPayLink = document.getElementById("mockPayLink");
+  const elMockPayQr = document.getElementById("mockPayQr");
+  const elMockPayStatus = document.getElementById("mockPayStatus");
+
+  const elRealPayProvider = document.getElementById("realPayProvider");
+  const elRealPayPhone = document.getElementById("realPayPhone");
+  const elRealPayBtn = document.getElementById("realPayBtn");
+  const elRealPayStatus = document.getElementById("realPayStatus");
+
+  let mockPayTimer = null;
+  let lastMockPaymentId = null;
+
+  let realPayTimer = null;
+  let lastRealPaymentId = null;
 
   let categorias = [];
   let produtos = [];
@@ -28,6 +53,378 @@
   function apiUrl(path) {
     if (!path.startsWith("/")) path = "/" + path;
     return `${API_BASE_URL}${path}`;
+  }
+
+  function setRealPayUi(state, msg) {
+    try {
+      if (elRealPayStatus) {
+        elRealPayStatus.style.display = "block";
+        elRealPayStatus.textContent = msg || "";
+        if (state === "paid") elRealPayStatus.style.color = "#16a34a";
+        else if (state === "error") elRealPayStatus.style.color = "#b00020";
+        else elRealPayStatus.style.color = "#374151";
+      }
+
+      if (elRealPayBtn) {
+        if (state === "processing") {
+          elRealPayBtn.disabled = true;
+          elRealPayBtn.innerHTML = '<span class="btn-spinner"></span>Processando...';
+        } else {
+          elRealPayBtn.disabled = false;
+          elRealPayBtn.textContent = "Pagar (Push)";
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function normalizePhone(s) {
+    return String(s || "").replace(/\s+/g, "").replace(/[^0-9+]/g, "");
+  }
+
+  async function startDistanceCheckout() {
+    try {
+      if (!cart.length) {
+        openAppModal("Atenção", "Seu carrinho está vazio.");
+        return;
+      }
+
+      const tipo = String(elDistanciaTipo?.value || "entrega").trim().toLowerCase();
+      if (tipo !== "entrega" && tipo !== "retirada") {
+        openAppModal("Atenção", "Tipo inválido. Use entrega ou retirada.");
+        return;
+      }
+
+      const clienteNome = String(elDistanciaNome?.value || "").trim();
+      if (!clienteNome) {
+        openAppModal("Atenção", "Informe seu nome.");
+        return;
+      }
+
+      const clienteTelefone = normalizePhone(elDistanciaTelefone?.value || "");
+      if (!clienteTelefone || clienteTelefone.length < 8) {
+        openAppModal("Atenção", "Informe um telefone válido.");
+        return;
+      }
+
+      let enderecoEntrega = null;
+      if (tipo === "entrega") {
+        enderecoEntrega = String(elDistanciaEndereco?.value || "").trim();
+        if (!enderecoEntrega) {
+          openAppModal("Atenção", "Endereço é obrigatório para entrega.");
+          return;
+        }
+      }
+
+      const taxaEntrega = Number(elDistanciaTaxa?.value || 0) || 0;
+
+      const provider = String(elRealPayProvider?.value || "mpesa").toLowerCase();
+      const phone = normalizePhone(elRealPayPhone?.value || "");
+      if (!phone || phone.length < 8) {
+        openAppModal("Atenção", "Informe o número para o Push (Mpesa/eMola).");
+        return;
+      }
+
+      if (realPayTimer) {
+        clearInterval(realPayTimer);
+        realPayTimer = null;
+      }
+
+      setRealPayUi("processing", "Iniciando checkout (distância)...");
+
+      const payload = {
+        tipo,
+        cliente_nome: clienteNome,
+        cliente_telefone: clienteTelefone,
+        endereco_entrega: enderecoEntrega,
+        taxa_entrega: taxaEntrega,
+        provider,
+        phone,
+        itens: cart.map((it) => ({
+          produto_id: String(it.id),
+          quantidade: Number(it.quantidade),
+          observacao: null,
+        })),
+      };
+
+      const res = await fetchJson("/public/distancia/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const paymentId = res && (res.payment_id || res.paymentId || res.id);
+      const pedidoUuid = res && (res.pedido_uuid || res.pedidoUuid);
+      if (!paymentId || !pedidoUuid) {
+        setRealPayUi("error", "Falha ao iniciar checkout à distância.");
+        return;
+      }
+
+      lastRealPaymentId = String(paymentId);
+      startOrderTracking(String(pedidoUuid), { openModal: true });
+
+      setRealPayUi("pending", "Solicitação enviada. Confirme no telemóvel...");
+
+      const tick = async () => {
+        try {
+          if (!lastRealPaymentId) return;
+          const st = await fetchJson(`/api/payments/${encodeURIComponent(lastRealPaymentId)}`);
+          const status = st && st.status ? String(st.status) : "pending";
+          if (status === "paid") {
+            setRealPayUi("paid", "Pagamento confirmado.");
+            if (realPayTimer) {
+              clearInterval(realPayTimer);
+              realPayTimer = null;
+            }
+            cart = [];
+            renderCart();
+          } else if (status === "failed" || status === "canceled") {
+            setRealPayUi("error", "Pagamento não concluído.");
+            if (realPayTimer) {
+              clearInterval(realPayTimer);
+              realPayTimer = null;
+            }
+          } else {
+            setRealPayUi("pending", "Aguardando confirmação no telemóvel...");
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      tick();
+      realPayTimer = setInterval(tick, 2500);
+    } catch (e) {
+      setRealPayUi("error", "Erro ao iniciar checkout à distância.");
+    }
+  }
+
+  async function startRealPayment() {
+    try {
+      if (!elMesaSelect?.value) {
+        openAppModal("Atenção", "Selecione uma mesa.");
+        return;
+      }
+      if (!cart.length) {
+        openAppModal("Atenção", "Seu carrinho está vazio.");
+        return;
+      }
+
+      const provider = String(elRealPayProvider?.value || "mpesa").toLowerCase();
+      const phone = normalizePhone(elRealPayPhone?.value || "");
+      if (!phone || phone.length < 8) {
+        openAppModal("Atenção", "Informe um telefone válido.");
+        return;
+      }
+
+      if (realPayTimer) {
+        clearInterval(realPayTimer);
+        realPayTimer = null;
+      }
+
+      setRealPayUi("processing", "Criando pedido pendente...");
+
+      const mesaId = elMesaSelect.value;
+      const payload = {
+        mesa_id: Number(mesaId),
+        lugar_numero: 1,
+        observacao_cozinha: null,
+        payment_mode: "online",
+        itens: cart.map((it) => ({
+          produto_id: String(it.id),
+          quantidade: Number(it.quantidade),
+          observacao: null,
+        })),
+      };
+
+      const mesaObj = mesasIndex.get(String(mesaId));
+      const mesaToken = mesaObj && mesaObj.mesa_token ? String(mesaObj.mesa_token) : "";
+      const orderPath = mesaToken ? `/public/mesa/${encodeURIComponent(mesaToken)}/pedidos` : "/public/pedidos";
+
+      const headers = { "Content-Type": "application/json" };
+      if (KIOSK_PIN) headers["X-Kiosk-Pin"] = KIOSK_PIN;
+      const orderRes = await fetchJson(orderPath, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!(orderRes && orderRes.pedido_uuid)) {
+        setRealPayUi("error", "Falha ao criar pedido.");
+        return;
+      }
+
+      const pedidoUuid = String(orderRes.pedido_uuid);
+      startOrderTracking(pedidoUuid, { openModal: true });
+
+      setRealPayUi("processing", "Iniciando cobrança (Push)...");
+
+      const checkout = await fetchJson("/api/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pedido_uuid: pedidoUuid, provider, phone }),
+      });
+
+      const paymentId = checkout && (checkout.payment_id || checkout.id);
+      if (!paymentId) {
+        setRealPayUi("error", "Falha ao iniciar pagamento.");
+        return;
+      }
+
+      lastRealPaymentId = String(paymentId);
+      setRealPayUi("pending", "Solicitação enviada. Confirme no telemóvel...");
+
+      const tick = async () => {
+        try {
+          if (!lastRealPaymentId) return;
+          const st = await fetchJson(`/api/payments/${encodeURIComponent(lastRealPaymentId)}`);
+          const status = st && st.status ? String(st.status) : "pending";
+          if (status === "paid") {
+            setRealPayUi("paid", "Pagamento confirmado.");
+            if (realPayTimer) {
+              clearInterval(realPayTimer);
+              realPayTimer = null;
+            }
+            cart = [];
+            renderCart();
+          } else if (status === "failed" || status === "canceled") {
+            setRealPayUi("error", "Pagamento não concluído.");
+            if (realPayTimer) {
+              clearInterval(realPayTimer);
+              realPayTimer = null;
+            }
+          } else {
+            setRealPayUi("pending", "Aguardando confirmação no telemóvel...");
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      tick();
+      realPayTimer = setInterval(tick, 2500);
+    } catch (e) {
+      setRealPayUi("error", "Erro ao iniciar pagamento.");
+    } finally {
+      if (elRealPayBtn && elRealPayBtn.disabled) {
+        // keep disabled only while polling
+      }
+    }
+  }
+
+  function setMockPayUi(state, msg, payUrl) {
+    try {
+      if (elMockPayStatus) {
+        elMockPayStatus.style.display = "block";
+        elMockPayStatus.textContent = msg || "";
+        if (state === "paid") elMockPayStatus.style.color = "#16a34a";
+        else if (state === "error") elMockPayStatus.style.color = "#b00020";
+        else elMockPayStatus.style.color = "#374151";
+      }
+
+      if (elMockPayLink) {
+        if (payUrl) {
+          elMockPayLink.href = payUrl;
+          elMockPayLink.style.display = "inline";
+        } else {
+          elMockPayLink.style.display = "none";
+        }
+      }
+
+      if (elMockPayQr) {
+        if (payUrl) {
+          const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(payUrl);
+          elMockPayQr.innerHTML = `<img src="${qrUrl}" alt="QR Pagamento" style="width:180px;height:180px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;" />`;
+          elMockPayQr.style.display = "block";
+        } else {
+          elMockPayQr.style.display = "none";
+          elMockPayQr.innerHTML = "";
+        }
+      }
+
+      if (elMockPayBtn) {
+        if (state === "processing") {
+          elMockPayBtn.disabled = true;
+          elMockPayBtn.innerHTML = '<span class="btn-spinner"></span>Gerando...';
+        } else {
+          elMockPayBtn.disabled = false;
+          elMockPayBtn.textContent = "Pagar à distância";
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  async function startMockPayment() {
+    try {
+      if (!cart.length) {
+        openAppModal("Atenção", "Seu carrinho está vazio.");
+        return;
+      }
+
+      if (mockPayTimer) {
+        clearInterval(mockPayTimer);
+        mockPayTimer = null;
+      }
+
+      setMockPayUi("processing", "Gerando link de pagamento...", null);
+
+      const amount = cartTotal();
+      const res = await fetchJson("/api/payments/mock/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount,
+          currency: "MZN",
+          description: "Pagamento do cardápio (simulação)",
+          auto_pay_seconds: 25,
+        }),
+      });
+
+      const paymentId = res && (res.payment_id || res.id);
+      const payPath = res && (res.payment_url || "");
+      if (!paymentId || !payPath) {
+        setMockPayUi("error", "Falha ao gerar pagamento.", null);
+        return;
+      }
+
+      lastMockPaymentId = String(paymentId);
+
+      const payUrl = payPath.startsWith("http") ? payPath : apiUrl(payPath);
+      setMockPayUi("pending", "Aguardando pagamento...", payUrl);
+
+      const tick = async () => {
+        try {
+          if (!lastMockPaymentId) return;
+          const st = await fetchJson(`/api/payments/mock/${encodeURIComponent(lastMockPaymentId)}`);
+          const status = st && st.status ? String(st.status) : "pending";
+          if (status === "paid") {
+            setMockPayUi("paid", "Pagamento confirmado (simulação).", payUrl);
+            if (mockPayTimer) {
+              clearInterval(mockPayTimer);
+              mockPayTimer = null;
+            }
+          } else if (status === "not_found") {
+            setMockPayUi("error", "Pagamento não encontrado.", payUrl);
+            if (mockPayTimer) {
+              clearInterval(mockPayTimer);
+              mockPayTimer = null;
+            }
+          } else {
+            setMockPayUi("pending", "Aguardando pagamento...", payUrl);
+          }
+        } catch (e) {
+          // ignore polling errors
+        }
+      };
+
+      tick();
+      mockPayTimer = setInterval(tick, 2500);
+    } catch (e) {
+      setMockPayUi("error", "Erro ao iniciar pagamento.", null);
+    }
   }
 
   function getTenantSlug() {
@@ -200,7 +597,8 @@
     const tenantId = getTenantId();
     const nextOpts = { ...(opts || {}) };
     const nextHeaders = { ...((nextOpts.headers || {}) instanceof Headers ? Object.fromEntries(nextOpts.headers.entries()) : (nextOpts.headers || {})) };
-    if (!tenantSlug && tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
+    if (tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
+    if (tenantSlug && !nextHeaders["X-Tenant-Slug"]) nextHeaders["X-Tenant-Slug"] = tenantSlug;
     nextOpts.headers = nextHeaders;
 
     const timeoutMs = Number(nextOpts.timeoutMs || 15000);
@@ -396,7 +794,7 @@
                     <path d="M12 8h.01"></path>
                   </svg>
                 </button>
-                <button class="add-btn" data-id="${p.id}" disabled>Adicionar</button>
+                <button class="add-btn" data-id="${p.id}">Adicionar</button>
               </div>
             </div>
           </div>
@@ -407,7 +805,6 @@
 
     elProductsGrid.querySelectorAll(".add-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (btn.disabled) return;
         const id = btn.getAttribute("data-id");
         const prod = produtos.find((x) => String(x.id) === String(id));
         if (prod) addToCart(prod);
@@ -514,6 +911,26 @@
     elCartModal.style.display = "block";
     renderCart();
     loadMesas();
+    // Recalcular UI de tipo de pedido sempre que abrir o carrinho
+    try {
+      updateOrderTypeUi();
+      const orderType = String(elOrderTypeSelect?.value || "local").trim().toLowerCase();
+      if (orderType !== "distancia" && elPayPushBlock) {
+        // Em pedido local, só mostrar Push depois que o usuário escolher pagar online
+        elPayPushBlock.style.display = "none";
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function updateOrderTypeUi() {
+    const orderType = String(elOrderTypeSelect?.value || "local").trim().toLowerCase();
+    const isDistance = orderType === "distancia";
+    if (elMesaSelectionBlock) elMesaSelectionBlock.style.display = isDistance ? "none" : "block";
+    if (elDistanciaBlock) elDistanciaBlock.style.display = isDistance ? "block" : "none";
+    // distância exige pagamento online; local só mostra quando usuário escolher pagar online
+    if (elPayPushBlock) elPayPushBlock.style.display = isDistance ? "block" : "none";
   }
 
   function closeCart() {
@@ -547,15 +964,38 @@
 
   async function submitOrder() {
     setOrderUiState("hidden");
+    if (!cart.length) {
+      setOrderUiState("error", "Carrinho vazio.");
+      openAppModal("Atenção", "Seu carrinho está vazio.");
+      return;
+    }
+
+    const orderType = String(elOrderTypeSelect?.value || "local").trim().toLowerCase();
+    if (orderType === "distancia") {
+      // distância: pagamento obrigatório
+      startDistanceCheckout();
+      return;
+    }
+
     const mesaId = elMesaSelect?.value;
     if (!mesaId) {
       setOrderUiState("error", "Selecione uma mesa.");
       openAppModal("Atenção", "Selecione uma mesa para enviar o pedido.");
       return;
     }
-    if (!cart.length) {
-      setOrderUiState("error", "Carrinho vazio.");
-      openAppModal("Atenção", "Seu carrinho está vazio.");
+
+    const payOnline = window.confirm(
+      "Como deseja pagar?\n\nOK = Pagar online (M-Pesa/eMola)\nCancelar = Pagar no local (caixa)"
+    );
+    if (payOnline) {
+      if (elPayPushBlock) elPayPushBlock.style.display = "block";
+      // orientar o usuário a preencher telefone e clicar em Pagar (Push)
+      setRealPayUi("pending", "Preencha o telefone e clique em 'Pagar (Push)'.");
+      try {
+        elRealPayPhone?.focus();
+      } catch (e) {
+        // ignore
+      }
       return;
     }
 
@@ -563,8 +1003,9 @@
       mesa_id: Number(mesaId),
       lugar_numero: 1,
       observacao_cozinha: null,
+      payment_mode: "balcao",
       itens: cart.map((it) => ({
-        produto_id: Number(it.id),
+        produto_id: String(it.id),
         quantidade: Number(it.quantidade),
         observacao: null,
       })),
@@ -645,6 +1086,8 @@
   window.openOrderTracking = openOrderTracking;
   window.closeOrderTracking = closeOrderTracking;
   window.clearOrderTracking = clearOrderTracking;
+  window.startMockPayment = startMockPayment;
+  window.startRealPayment = startRealPayment;
 
   document.addEventListener("click", (e) => {
     const btn = e.target;
@@ -675,8 +1118,24 @@
     loadCategorias();
     loadProdutos();
     updateCartBadge();
+
+    // Reset UI de pagamento simulado ao iniciar
+    try {
+      if (elMockPayLink) elMockPayLink.style.display = "none";
+      if (elMockPayQr) elMockPayQr.style.display = "none";
+      if (elMockPayStatus) elMockPayStatus.style.display = "none";
+      if (elRealPayStatus) elRealPayStatus.style.display = "none";
+    } catch (e) {
+      // ignore
+    }
+
     const lastUuid = localStorage.getItem("last_pedido_uuid");
     // Ao voltar ao cardápio, manter acompanhamento em background, mas NÃO abrir modal automaticamente.
     if (lastUuid) startOrderTracking(lastUuid, { openModal: false });
+
+    if (elOrderTypeSelect) {
+      elOrderTypeSelect.addEventListener("change", updateOrderTypeUi);
+      updateOrderTypeUi();
+    }
   });
 })();

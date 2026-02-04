@@ -52,17 +52,54 @@
                 <div class="cart-items" id="cartItems">
                     <!-- Itens do carrinho serão inseridos aqui -->
                 </div>
+
+                <div class="mesa-selection" style="margin-top: 14px;">
+                    <h3>📌 Tipo de Pedido</h3>
+                    <select id="orderTypeSelect" class="mesa-select">
+                        <option value="local">No restaurante (mesa)</option>
+                        <option value="distancia">À distância (entrega/retirada)</option>
+                    </select>
+                </div>
                 
-                <div class="mesa-selection">
+                <div class="mesa-selection" id="mesaSelectionBlock">
                     <h3>🏪 Selecione sua Mesa</h3>
                     <select id="mesaSelect" class="mesa-select">
                         <option value="">Carregando mesas...</option>
                     </select>
                 </div>
+
+                <div class="mesa-selection" id="distanciaBlock" style="display:none;">
+                    <h3>🚚 Pedido à distância</h3>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <select id="distanciaTipo" class="mesa-select" style="max-width: 220px; flex: 1 1 160px;">
+                            <option value="entrega">Entrega</option>
+                            <option value="retirada">Retirada</option>
+                        </select>
+                        <input id="distanciaNome" class="mesa-select" style="max-width: 260px; flex: 1 1 180px;" type="text" placeholder="Seu nome" />
+                        <input id="distanciaTelefone" class="mesa-select" style="max-width: 260px; flex: 1 1 180px;" type="tel" placeholder="Seu telefone" />
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+                        <input id="distanciaEndereco" class="mesa-select" style="flex: 1 1 280px;" type="text" placeholder="Endereço (bairro/rua/referência)" />
+                        <input id="distanciaTaxa" class="mesa-select" style="max-width: 220px; flex: 1 1 160px;" type="number" min="0" step="0.01" placeholder="Taxa entrega (MT)" />
+                    </div>
+                </div>
                 
                 <div class="cart-actions">
                     <button class="cart-action-btn secondary" onclick="closeCart()">Cancelar</button>
                     <button class="cart-action-btn primary" id="submitOrderBtn" onclick="submitOrder()">Fazer Pedido</button>
+                </div>
+
+                <div class="mesa-selection" id="payPushBlock" style="margin-top: 12px; display:none;">
+                    <h3> Pagamento Mpesa/eMola (Push)</h3>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <select id="realPayProvider" class="mesa-select" style="max-width: 220px; flex: 1 1 160px;">
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="emola">eMola</option>
+                        </select>
+                        <input id="realPayPhone" class="mesa-select" style="max-width: 260px; flex: 1 1 180px;" type="tel" placeholder="Telefone (ex: 84xxxxxxx)" />
+                        <button class="cart-action-btn primary" type="button" id="realPayBtn" onclick="startRealPayment()" style="flex:0 0 auto;">Pagar (Push)</button>
+                    </div>
+                    <div id="realPayStatus" style="margin-top:10px; font-weight:700; color:#374151; display:none;"></div>
                 </div>
 
                 <div id="orderStatus" class="order-status" style="display: none;"></div>
