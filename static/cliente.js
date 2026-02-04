@@ -19,6 +19,9 @@
   const elDistanciaTelefone = document.getElementById("distanciaTelefone");
   const elDistanciaEndereco = document.getElementById("distanciaEndereco");
   const elDistanciaTaxa = document.getElementById("distanciaTaxa");
+
+  const elDistanciaPayProvider = document.getElementById("distanciaPayProvider");
+  const elDistanciaPayPhone = document.getElementById("distanciaPayPhone");
   const elSearchInput = document.getElementById("searchInput");
   const elOrderForm = document.getElementById("orderForm");
   const elSubmitOrderBtn = document.getElementById("submitOrderBtn");
@@ -60,6 +63,46 @@
   function apiUrl(path) {
     if (!path.startsWith("/")) path = "/" + path;
     return `${API_BASE_URL}${path}`;
+  }
+
+  function showToast(message, type = "success") {
+    try {
+      const id = "toast";
+      let el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement("div");
+        el.id = id;
+        el.style.position = "fixed";
+        el.style.top = "20px";
+        el.style.right = "20px";
+        el.style.background = type === "error" ? "#f44336" : "#16a34a";
+        el.style.color = "#fff";
+        el.style.padding = "12px 16px";
+        el.style.borderRadius = "10px";
+        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.18)";
+        el.style.fontWeight = "700";
+        el.style.zIndex = "9999";
+        el.style.maxWidth = "320px";
+        el.style.transform = "translateX(140%)";
+        el.style.transition = "transform 0.25s ease";
+        document.body.appendChild(el);
+      }
+      el.textContent = String(message || "");
+      el.style.background = type === "error" ? "#f44336" : "#16a34a";
+      // force reflow
+      void el.offsetHeight;
+      el.style.transform = "translateX(0)";
+      clearTimeout(el.__toastTimer);
+      el.__toastTimer = setTimeout(() => {
+        try {
+          el.style.transform = "translateX(140%)";
+        } catch (e) {
+          // ignore
+        }
+      }, 2200);
+    } catch (e) {
+      // ignore
+    }
   }
 
   function setRealPayUi(state, msg) {
@@ -214,8 +257,8 @@
 
       const taxaEntrega = Number(elDistanciaTaxa?.value || 0) || 0;
 
-      const provider = String(elRealPayProvider?.value || "mpesa").toLowerCase();
-      const phone = normalizePhone(elRealPayPhone?.value || "");
+      const provider = String(elDistanciaPayProvider?.value || "mpesa").toLowerCase();
+      const phone = normalizePhone(elDistanciaPayPhone?.value || "");
       if (!phone || phone.length < 8) {
         openAppModal("Atenção", "Informe o número para o Push (Mpesa/eMola).");
         return;
@@ -249,11 +292,19 @@
         body: JSON.stringify(payload),
       });
 
+      showToast("Pedido já foi enviado", "success");
+
       const paymentId = res && (res.payment_id || res.paymentId || res.id);
       const pedidoUuid = res && (res.pedido_uuid || res.pedidoUuid);
       if (!paymentId || !pedidoUuid) {
         setRealPayUi("error", "Falha ao iniciar checkout à distância.");
         return;
+      }
+
+      try {
+        closeCart();
+      } catch (e) {
+        // ignore
       }
 
       lastRealPaymentId = String(paymentId);
