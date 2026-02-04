@@ -37,6 +37,13 @@
   const elRealPayBtn = document.getElementById("realPayBtn");
   const elRealPayStatus = document.getElementById("realPayStatus");
 
+  const elPayChoiceModal = document.getElementById("payChoiceModal");
+  const elPushPayModal = document.getElementById("pushPayModal");
+  const elPushPayProvider = document.getElementById("pushPayProvider");
+  const elPushPayPhone = document.getElementById("pushPayPhone");
+  const elPushPayStatus = document.getElementById("pushPayStatus");
+  const elPushPayFinalizeBtn = document.getElementById("pushPayFinalizeBtn");
+
   let mockPayTimer = null;
   let lastMockPaymentId = null;
 
@@ -65,6 +72,14 @@
         else elRealPayStatus.style.color = "#374151";
       }
 
+      if (elPushPayStatus) {
+        elPushPayStatus.style.display = "block";
+        elPushPayStatus.textContent = msg || "";
+        if (state === "paid") elPushPayStatus.style.color = "#16a34a";
+        else if (state === "error") elPushPayStatus.style.color = "#b00020";
+        else elPushPayStatus.style.color = "#374151";
+      }
+
       if (elRealPayBtn) {
         if (state === "processing") {
           elRealPayBtn.disabled = true;
@@ -74,9 +89,89 @@
           elRealPayBtn.textContent = "Pagar (Push)";
         }
       }
+
+      if (elPushPayFinalizeBtn) {
+        if (state === "processing") {
+          elPushPayFinalizeBtn.disabled = true;
+          elPushPayFinalizeBtn.innerHTML = '<span class="btn-spinner"></span>Finalizando...';
+        } else {
+          elPushPayFinalizeBtn.disabled = false;
+          elPushPayFinalizeBtn.textContent = "Finalizar pedido";
+        }
+      }
     } catch (e) {
       // ignore
     }
+  }
+
+  function openPayChoiceModal() {
+    if (!elPayChoiceModal) return;
+    elPayChoiceModal.style.display = "block";
+  }
+
+  function closePayChoiceModal() {
+    if (!elPayChoiceModal) return;
+    elPayChoiceModal.style.display = "none";
+  }
+
+  function openPushPayModal() {
+    if (!elPushPayModal) return;
+    if (elPushPayProvider && elRealPayProvider) elPushPayProvider.value = elRealPayProvider.value;
+    if (elPushPayPhone && elRealPayPhone) elPushPayPhone.value = elRealPayPhone.value;
+    if (elPushPayStatus) {
+      elPushPayStatus.style.display = "none";
+      elPushPayStatus.textContent = "";
+    }
+    elPushPayModal.style.display = "block";
+    try {
+      elPushPayPhone?.focus();
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function closePushPayModal() {
+    if (!elPushPayModal) return;
+    elPushPayModal.style.display = "none";
+  }
+
+  function choosePayCash() {
+    closePayChoiceModal();
+    submitLocalCashOrder();
+  }
+
+  function choosePayOnline() {
+    closePayChoiceModal();
+    openPushPayModal();
+  }
+
+  async function finalizePushPayment() {
+    const provider = String(elPushPayProvider?.value || "mpesa").toLowerCase();
+    const phone = normalizePhone(elPushPayPhone?.value || "");
+    if (!phone || phone.length < 8) {
+      setRealPayUi("error", "Informe o número para o Push (Mpesa/eMola).");
+      try {
+        elPushPayPhone?.focus();
+      } catch (e) {
+        // ignore
+      }
+      return;
+    }
+
+    try {
+      if (elRealPayProvider) elRealPayProvider.value = provider;
+      if (elRealPayPhone) elRealPayPhone.value = phone;
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      closePushPayModal();
+    } catch (e) {
+      // ignore
+    }
+
+    await startRealPayment();
   }
 
   function normalizePhone(s) {
@@ -179,6 +274,26 @@
             }
             cart = [];
             renderCart();
+
+            try {
+              closePushPayModal();
+              closeCart();
+            } catch (e) {
+              // ignore
+            }
+
+            try {
+              const wantTrack = window.confirm(
+                "Pagamento confirmado.\n\nOK = Acompanhar pedido\nCancelar = Limpar acompanhamento"
+              );
+              if (wantTrack) {
+                openOrderTracking();
+              } else {
+                clearOrderTracking();
+              }
+            } catch (e) {
+              // ignore
+            }
           } else if (status === "failed" || status === "canceled") {
             setRealPayUi("error", "Pagamento não concluído.");
             if (realPayTimer) {
@@ -933,7 +1048,7 @@
     if (elMesaSelectionBlock) elMesaSelectionBlock.style.display = isDistance ? "none" : "block";
     if (elDistanciaBlock) elDistanciaBlock.style.display = isDistance ? "block" : "none";
     // distância exige pagamento online; local só mostra quando usuário escolher pagar online
-    if (elPayPushBlock) elPayPushBlock.style.display = isDistance ? "block" : "none";
+    if (elPayPushBlock) elPayPushBlock.style.display = "none";
   }
 
   function closeCart() {
@@ -965,7 +1080,7 @@
     }
   }
 
-  async function submitOrder() {
+  async function submitLocalCashOrder() {
     setOrderUiState("hidden");
     if (!cart.length) {
       setOrderUiState("error", "Carrinho vazio.");
@@ -984,21 +1099,6 @@
     if (!mesaId) {
       setOrderUiState("error", "Selecione uma mesa.");
       openAppModal("Atenção", "Selecione uma mesa para enviar o pedido.");
-      return;
-    }
-
-    const payOnline = window.confirm(
-      "Como deseja pagar?\n\nOK = Pagar online (M-Pesa/eMola)\nCancelar = Pagar no local (caixa)"
-    );
-    if (payOnline) {
-      if (elPayPushBlock) elPayPushBlock.style.display = "block";
-      // orientar o usuário a preencher telefone e clicar em Pagar (Push)
-      setRealPayUi("pending", "Preencha o telefone e clique em 'Pagar (Push)'.");
-      try {
-        elRealPayPhone?.focus();
-      } catch (e) {
-        // ignore
-      }
       return;
     }
 
@@ -1081,6 +1181,23 @@
     }
   }
 
+  async function submitOrder() {
+    setOrderUiState("hidden");
+    if (!cart.length) {
+      setOrderUiState("error", "Carrinho vazio.");
+      openAppModal("Atenção", "Seu carrinho está vazio.");
+      return;
+    }
+
+    const orderType = String(elOrderTypeSelect?.value || "local").trim().toLowerCase();
+    if (orderType === "distancia") {
+      startDistanceCheckout();
+      return;
+    }
+
+    openPayChoiceModal();
+  }
+
   // Expose minimal functions used by HTML
   window.openCart = openCart;
   window.closeCart = closeCart;
@@ -1091,6 +1208,11 @@
   window.clearOrderTracking = clearOrderTracking;
   window.startMockPayment = startMockPayment;
   window.startRealPayment = startRealPayment;
+  window.closePayChoiceModal = closePayChoiceModal;
+  window.choosePayCash = choosePayCash;
+  window.choosePayOnline = choosePayOnline;
+  window.closePushPayModal = closePushPayModal;
+  window.finalizePushPayment = finalizePushPayment;
 
   document.addEventListener("click", (e) => {
     const btn = e.target;
@@ -1128,6 +1250,7 @@
       if (elMockPayQr) elMockPayQr.style.display = "none";
       if (elMockPayStatus) elMockPayStatus.style.display = "none";
       if (elRealPayStatus) elRealPayStatus.style.display = "none";
+      if (elPushPayStatus) elPushPayStatus.style.display = "none";
     } catch (e) {
       // ignore
     }

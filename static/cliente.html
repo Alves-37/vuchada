@@ -146,5 +146,44 @@
             </div>
         </div>
     </div>
+
+    <div id="payChoiceModal" class="app-modal" style="display: none;">
+        <div class="app-modal-content" role="dialog" aria-modal="true" aria-labelledby="payChoiceTitle">
+            <div class="app-modal-header">
+                <div id="payChoiceTitle" class="app-modal-title">Pagamento</div>
+                <button class="app-modal-close" type="button" onclick="closePayChoiceModal()">×</button>
+            </div>
+            <div class="app-modal-body">
+                <div>Preferes pagar online ou dinheiro físico?</div>
+            </div>
+            <div class="app-modal-actions">
+                <button class="app-modal-btn" type="button" onclick="choosePayCash()">Dinheiro físico</button>
+                <button class="app-modal-btn" type="button" onclick="choosePayOnline()">Online (M-Pesa/eMola)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pushPayModal" class="app-modal" style="display: none;">
+        <div class="app-modal-content" role="dialog" aria-modal="true" aria-labelledby="pushPayTitle">
+            <div class="app-modal-header">
+                <div id="pushPayTitle" class="app-modal-title">Pagamento Mpesa/eMola (Push)</div>
+                <button class="app-modal-close" type="button" onclick="closePushPayModal()">×</button>
+            </div>
+            <div class="app-modal-body">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                    <select id="pushPayProvider" class="mesa-select" style="max-width: 220px; flex: 1 1 160px;">
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="emola">eMola</option>
+                    </select>
+                    <input id="pushPayPhone" class="mesa-select" style="max-width: 260px; flex: 1 1 180px;" type="tel" placeholder="Telefone (ex: 84xxxxxxx)" />
+                </div>
+                <div id="pushPayStatus" style="margin-top:10px; font-weight:700; color:#374151; display:none;"></div>
+            </div>
+            <div class="app-modal-actions">
+                <button class="app-modal-btn" type="button" onclick="closePushPayModal()">Cancelar</button>
+                <button class="app-modal-btn" type="button" id="pushPayFinalizeBtn" onclick="finalizePushPayment()">Finalizar pedido</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
