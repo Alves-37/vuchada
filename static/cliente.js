@@ -65,6 +65,16 @@
     return `${API_BASE_URL}${path}`;
   }
 
+  function getPhonePayUrl(paymentId) {
+    try {
+      const base = String(API_BASE_URL || "").replace(/\/+$/, "");
+      const path = `/api/payments/${encodeURIComponent(String(paymentId))}/pay`;
+      return base ? `${base}${path}` : path;
+    } catch (e) {
+      return "";
+    }
+  }
+
   function showToast(message, type = "success") {
     try {
       const id = "toast";
@@ -302,6 +312,18 @@
       }
 
       try {
+        const url = getPhonePayUrl(paymentId);
+        if (url) {
+          openAppModal(
+            "Confirme no telemóvel",
+            `Abra este link no celular para confirmar o pagamento:\n\n${url}`
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      try {
         closeCart();
       } catch (e) {
         // ignore
@@ -442,6 +464,19 @@
       }
 
       lastRealPaymentId = String(paymentId);
+
+      try {
+        const url = getPhonePayUrl(paymentId);
+        if (url) {
+          openAppModal(
+            "Confirme no telemóvel",
+            `Abra este link no celular para confirmar o pagamento:\n\n${url}`
+          );
+        }
+      } catch (e) {
+        // ignore
+      }
+
       setRealPayUi("pending", "Solicitação enviada. Confirme no telemóvel...");
 
       const tick = async () => {
