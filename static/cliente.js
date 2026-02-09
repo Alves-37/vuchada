@@ -975,6 +975,10 @@
       items = items.filter((p) => String(p.name || "").toLowerCase().includes(search));
     }
 
+    items = [...items].sort((a, b) =>
+      String(a?.name || "").localeCompare(String(b?.name || ""), "pt", { sensitivity: "base" })
+    );
+
     if (!items.length) {
       elProductsGrid.innerHTML = `<div class="empty">Nenhum produto encontrado</div>`;
       return;
@@ -1075,6 +1079,11 @@
         if (!uniqueById.has(key)) uniqueById.set(key, p);
       });
       produtos = Array.from(uniqueById.values());
+
+      // Ordem alfabética por nome (pt, ignorando maiúsculas/acentos)
+      produtos = [...produtos].sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""), "pt", { sensitivity: "base" })
+      );
 
       renderProdutos();
     } catch (e) {
@@ -1268,6 +1277,11 @@
   }
 
   async function submitOrder() {
+    try {
+      if (elSubmitOrderBtn && elSubmitOrderBtn.disabled) return;
+    } catch (e) {
+      // ignore
+    }
     setOrderUiState("hidden");
     if (!cart.length) {
       setOrderUiState("error", "Carrinho vazio.");
@@ -1281,7 +1295,10 @@
       return;
     }
 
-    openPayChoiceModal();
+    // Pedido local (mesa): por padrão enviar como pagamento no balcão.
+    // Isso evita o caso do usuário clicar e "não acontecer nada" caso o modal de pagamento
+    // não esteja visível/funcionando no dispositivo.
+    submitLocalCashOrder();
   }
 
   // Expose minimal functions used by HTML
