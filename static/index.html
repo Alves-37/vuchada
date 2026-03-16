@@ -682,7 +682,8 @@
         async function checkRestaurantStatus() {
             try {
                 const base = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ? String(window.APP_CONFIG.API_BASE_URL).replace(/\/$/, '') : '';
-                const url = base ? `${base}/api/restaurant-status` : '/api/restaurant-status';
+                const h = (window.location && window.location.host) ? String(window.location.host) : '';
+                const url = base ? `${base}/api/restaurant-status?host=${encodeURIComponent(h)}` : `/api/restaurant-status?host=${encodeURIComponent(h)}`;
                 const response = await fetch(url);
                 const status = await response.json();
                 

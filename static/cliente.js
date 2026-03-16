@@ -799,6 +799,19 @@
   async function fetchJson(path, opts) {
     const tenantSlug = getTenantSlug();
     const tenantId = getTenantId();
+    try {
+      const p = String(path || "");
+      // Quando o proxy não repassa Host/X-Forwarded-Host corretamente (Vercel -> Railway),
+      // enviamos o host do site via query param para o backend resolver a filial.
+      if ((p.startsWith("/api/") || p.startsWith("/public/")) && !/[?&](host|domain)=/i.test(p)) {
+        const h = (window.location && window.location.host) ? String(window.location.host) : "";
+        if (h) {
+          path = `${p}${p.includes("?") ? "&" : "?"}host=${encodeURIComponent(h)}`;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
     const nextOpts = { ...(opts || {}) };
     const nextHeaders = { ...((nextOpts.headers || {}) instanceof Headers ? Object.fromEntries(nextOpts.headers.entries()) : (nextOpts.headers || {})) };
     if (tenantId && !nextHeaders["X-Tenant-Id"]) nextHeaders["X-Tenant-Id"] = tenantId;
