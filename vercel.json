@@ -13,11 +13,17 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://neoerp-production.up.railway.app/api/$1"
+      "dest": "https://neoerp-production.up.railway.app/api/$1",
+      "headers": {
+        "X-Forwarded-Host": "menu.vuchada.com"
+      }
     },
     {
       "src": "/public/(.*)",
-      "dest": "https://neoerp-production.up.railway.app/public/$1"
+      "dest": "https://neoerp-production.up.railway.app/public/$1",
+      "headers": {
+        "X-Forwarded-Host": "menu.vuchada.com"
+      }
     },
     {
       "src": "/uploads/(.*)",
