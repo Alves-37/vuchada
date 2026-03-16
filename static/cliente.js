@@ -635,11 +635,11 @@
     try {
       const qs = new URLSearchParams(window.location.search || "");
       const fromQs = (qs.get("loja") || "").trim();
-      if (fromQs) return fromQs.toLowerCase();
+      if (fromQs) return fromQs;
     } catch (e) {
       // ignore
     }
-    return "restaurante";
+    return "";
   }
 
   function getTenantId() {
