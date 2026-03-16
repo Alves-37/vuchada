@@ -1,4 +1,4 @@
 window.APP_CONFIG = {
-  API_BASE_URL: "https://vuchadabackend-production.up.railway.app",
+  API_BASE_URL: "",
   KIOSK_PIN: "842384",
 };
