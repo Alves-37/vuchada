@@ -19,6 +19,7 @@
   const elDistanciaTelefone = document.getElementById("distanciaTelefone");
   const elDistanciaEndereco = document.getElementById("distanciaEndereco");
   const elDistanciaTaxa = document.getElementById("distanciaTaxa");
+  const elDistanciaBairro = document.getElementById("distanciaBairro");
 
   const elDistanciaPayProvider = document.getElementById("distanciaPayProvider");
   const elDistanciaPayPhone = document.getElementById("distanciaPayPhone");
@@ -58,6 +59,7 @@
   let selectedCategoriaId = "todos";
   let cart = [];
   let mesasIndex = new Map();
+  let deliveryZones = [];
   let orderPollTimer = null;
 
   function setSelectedCategoria(id) {
@@ -87,6 +89,79 @@
       return base ? `${base}${path}` : path;
     } catch (e) {
       return "";
+    }
+  }
+
+  function normalizeTextForMatch(s) {
+    return String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function renderDeliveryZones() {
+    if (!elDistanciaBairro) return;
+    const hasZones = Array.isArray(deliveryZones) && deliveryZones.length > 0;
+    if (!hasZones) {
+      elDistanciaBairro.innerHTML = `<option value="">Sem bairros configurados</option>`;
+      return;
+    }
+    elDistanciaBairro.innerHTML =
+      `<option value="">Selecione o bairro...</option>` +
+      deliveryZones
+        .map((z) => `<option value="${z.id}">${escapeHtml(z.name)}</option>`)
+        .join("");
+  }
+
+  function applyZoneToUi(zone) {
+    if (!zone) return;
+    try {
+      if (elDistanciaBairro) elDistanciaBairro.value = String(zone.id);
+    } catch (e) {
+      // ignore
+    }
+    try {
+      if (elDistanciaTaxa) elDistanciaTaxa.value = String(Number(zone.fee || 0));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function findZoneByText(text) {
+    const t = normalizeTextForMatch(text);
+    if (!t) return null;
+    const zones = Array.isArray(deliveryZones) ? deliveryZones : [];
+    for (const z of zones) {
+      const nameKey = normalizeTextForMatch(z.name);
+      if (nameKey && t.includes(nameKey)) return z;
+      const kws = Array.isArray(z.keywords) ? z.keywords : [];
+      for (const kw of kws) {
+        const k = normalizeTextForMatch(kw);
+        if (k && t.includes(k)) return z;
+      }
+    }
+    return null;
+  }
+
+  async function loadDeliveryZones() {
+    try {
+      if (!elDistanciaBairro) return;
+      elDistanciaBairro.innerHTML = `<option value="">Carregando bairros...</option>`;
+      const raw = await fetchJson("/public/delivery-zones");
+      deliveryZones = (Array.isArray(raw) ? raw : [])
+        .map((z) => ({
+          id: z.id,
+          name: z.name,
+          fee: Number(z.fee || 0),
+          keywords: Array.isArray(z.keywords) ? z.keywords : [],
+        }))
+        .filter((z) => z && z.id != null);
+      renderDeliveryZones();
+    } catch (e) {
+      deliveryZones = [];
+      if (elDistanciaBairro) elDistanciaBairro.innerHTML = `<option value="">Erro ao carregar bairros</option>`;
     }
   }
 
@@ -1424,6 +1499,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     loadCategorias();
     loadProdutos();
+    loadDeliveryZones();
     updateCartBadge();
 
     // Reset UI de pagamento simulado ao iniciar
@@ -1444,6 +1520,21 @@
     if (elOrderTypeSelect) {
       elOrderTypeSelect.addEventListener("change", updateOrderTypeUi);
       updateOrderTypeUi();
+    }
+
+    if (elDistanciaBairro) {
+      elDistanciaBairro.addEventListener("change", () => {
+        const id = elDistanciaBairro.value;
+        const z = (deliveryZones || []).find((x) => String(x.id) === String(id));
+        if (z) applyZoneToUi(z);
+      });
+    }
+
+    if (elDistanciaEndereco) {
+      elDistanciaEndereco.addEventListener("input", () => {
+        const zone = findZoneByText(elDistanciaEndereco.value);
+        if (zone) applyZoneToUi(zone);
+      });
     }
   });
 })();
