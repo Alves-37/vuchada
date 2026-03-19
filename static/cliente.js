@@ -62,6 +62,45 @@
   let deliveryZones = [];
   let orderPollTimer = null;
 
+  function translateOrderStatus(raw) {
+    const s = String(raw || "").trim().toLowerCase();
+    if (!s) return "-";
+    const map = {
+      open: "Recebido",
+      pending: "Recebido",
+      in_progress: "Em preparação",
+      preparing: "Em preparação",
+      ready: "Pronto",
+      completed: "Concluído",
+      done: "Concluído",
+      canceled: "Cancelado",
+      cancelled: "Cancelado",
+      paid: "Pago",
+    };
+    return map[s] || raw;
+  }
+
+  function setOrderTrackingPayUrl(url) {
+    try {
+      const u = String(url || "").trim();
+      if (!u) {
+        localStorage.removeItem("last_pedido_pay_url");
+      } else {
+        localStorage.setItem("last_pedido_pay_url", u);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function getOrderTrackingPayUrl() {
+    try {
+      return String(localStorage.getItem("last_pedido_pay_url") || "").trim();
+    } catch (e) {
+      return "";
+    }
+  }
+
   function setSelectedCategoria(id) {
     selectedCategoriaId = String(id || "todos");
     try {
@@ -367,6 +406,15 @@
 
       const taxaEntrega = Number(elDistanciaTaxa?.value || 0) || 0;
 
+      let bairroNome = null;
+      try {
+        const zid = elDistanciaBairro ? String(elDistanciaBairro.value || "") : "";
+        const z = zid ? (deliveryZones || []).find((x) => String(x.id) === zid) : null;
+        bairroNome = z && z.name ? String(z.name) : null;
+      } catch (e) {
+        bairroNome = null;
+      }
+
       const provider = String(elDistanciaPayProvider?.value || "mpesa").toLowerCase();
       const phone = normalizePhone(elDistanciaPayPhone?.value || "");
       if (!phone || phone.length < 8) {
@@ -387,6 +435,7 @@
         cliente_telefone: clienteTelefone,
         endereco_entrega: enderecoEntrega,
         taxa_entrega: taxaEntrega,
+        bairro: bairroNome,
         provider,
         phone,
         itens: cart.map((it) => ({
@@ -404,23 +453,19 @@
 
       showToast("Pedido já foi enviado", "success");
 
-      const paymentId = res && (res.payment_id || res.paymentId || res.id);
       const pedidoUuid = res && (res.pedido_uuid || res.pedidoUuid);
-      if (!paymentId || !pedidoUuid) {
-        setRealPayUi("error", "Falha ao iniciar checkout à distância.");
+      if (!pedidoUuid) {
+        setRealPayUi("error", "Falha ao criar pedido à distância.");
         return;
       }
 
+      const paymentId = res && (res.payment_id || res.paymentId || res.id);
+
       try {
         const url = getPhonePayUrl(paymentId);
-        if (url) {
-          openAppModal(
-            "Confirme no telemóvel",
-            `Abra este link no celular para confirmar o pagamento:\n\n${url}`
-          );
-        }
+        setOrderTrackingPayUrl(url || "");
       } catch (e) {
-        // ignore
+        setOrderTrackingPayUrl("");
       }
 
       try {
@@ -429,9 +474,14 @@
         // ignore
       }
 
-      lastRealPaymentId = String(paymentId);
       startOrderTracking(String(pedidoUuid), { openModal: true });
+      if (!paymentId) {
+        // Backend sem integração de Push: apenas acompanhar pedido
+        setRealPayUi("pending", "Pedido enviado. Aguarde a confirmação do restaurante...");
+        return;
+      }
 
+      lastRealPaymentId = String(paymentId);
       setRealPayUi("pending", "Solicitação enviada. Confirme no telemóvel...");
 
       const tick = async () => {
@@ -780,6 +830,7 @@
   function clearOrderTracking() {
     try {
       localStorage.removeItem("last_pedido_uuid");
+      localStorage.removeItem("last_pedido_pay_url");
     } catch (e) {
       // ignore
     }
@@ -815,7 +866,7 @@
             if (elOrderStatus) {
               elOrderStatus.style.display = "block";
               elOrderStatus.className = "order-status";
-              elOrderStatus.textContent = `Status do pedido: ${data.status}`;
+              elOrderStatus.textContent = `Estado do pedido: ${translateOrderStatus(data.status)}`;
             }
 
             const els = getOrderTrackEls();
@@ -824,6 +875,16 @@
               const rel = formatRelativeTime(data.updated_at);
               const updatedLine = rel ? `Atualizado ${rel}` : "";
               const totalLine = data.valor_total != null ? `Total: ${formatMt(data.valor_total)}` : "";
+
+              const payUrl = getOrderTrackingPayUrl();
+              const payHtml =
+                payUrl
+                  ? `<div style="margin-top:10px; padding:10px; border-radius:12px; background:#111827; border:1px solid #1f2937;">
+                       <div style="font-weight:700;">Pagamento</div>
+                       <div style="margin-top:6px; color:#d1d5db;">Confirme o pagamento no telemóvel:</div>
+                       <a href="${escapeHtml(payUrl)}" target="_blank" rel="noopener noreferrer" style="display:block; margin-top:6px; color:#60a5fa; word-break:break-all;">${escapeHtml(payUrl)}</a>
+                     </div>`
+                  : "";
 
               let itensHtml = "";
               if (Array.isArray(data.itens) && data.itens.length) {
@@ -842,10 +903,11 @@
               }
 
               els.elOrderTrackBody.innerHTML =
-                `<div style=\"font-weight:700;\">Pedido ${escapeHtml(idText)}</div>` +
-                `<div style=\"margin-top:6px;\">Status: <b>${escapeHtml(data.status)}</b></div>` +
-                (updatedLine ? `<div style=\"margin-top:6px; color:#6b7280;\">${escapeHtml(updatedLine)}</div>` : "") +
-                (totalLine ? `<div style=\"margin-top:10px;\"><b>${escapeHtml(totalLine)}</b></div>` : "") +
+                `<div style="font-weight:700;">Pedido ${escapeHtml(idText)}</div>` +
+                `<div style="margin-top:6px;">Estado: <b>${escapeHtml(translateOrderStatus(data.status))}</b></div>` +
+                (updatedLine ? `<div style="margin-top:6px; color:#6b7280;">${escapeHtml(updatedLine)}</div>` : "") +
+                (totalLine ? `<div style="margin-top:10px;"><b>${escapeHtml(totalLine)}</b></div>` : "") +
+                payHtml +
                 itensHtml;
             }
           }
