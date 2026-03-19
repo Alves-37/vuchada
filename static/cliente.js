@@ -160,6 +160,16 @@
         .filter((z) => z && z.id != null);
       renderDeliveryZones();
     } catch (e) {
+      try {
+        console.error("[CARDAPIO] Erro ao carregar bairros:", e);
+        if (e && e.name === "AppHttpError") {
+          console.error("[CARDAPIO] /public/delivery-zones status:", e.status);
+          console.error("[CARDAPIO] /public/delivery-zones bodyJson:", e.bodyJson);
+          console.error("[CARDAPIO] /public/delivery-zones bodyText:", e.bodyText);
+        }
+      } catch (logErr) {
+        // ignore
+      }
       deliveryZones = [];
       if (elDistanciaBairro) elDistanciaBairro.innerHTML = `<option value="">Erro ao carregar bairros</option>`;
     }
@@ -1250,8 +1260,10 @@
       if (!elMesaSelect) return;
       elMesaSelect.innerHTML = `<option value="">Carregando mesas...</option>`;
       const mesas = await fetchJson("/public/mesas");
+      console.log("[CARDAPIO] Resposta do servidor /public/mesas:", mesas);
       if (!Array.isArray(mesas) || !mesas.length) {
-        elMesaSelect.innerHTML = `<option value="">Nenhuma mesa disponível</option>`;
+        console.error("[CARDAPIO] Erro ao carregar mesas: resposta não é um array ou está vazia");
+        elMesaSelect.innerHTML = `<option value="">Erro ao carregar mesas</option>`;
         return;
       }
       const mesasFiltradas = mesas
@@ -1269,6 +1281,16 @@
           .map((m) => `<option value="${m.id}">Mesa ${m.numero}</option>`)
           .join("");
     } catch (e) {
+      try {
+        console.error("[CARDAPIO] Erro ao carregar mesas:", e);
+        if (e && e.name === "AppHttpError") {
+          console.error("[CARDAPIO] /public/mesas status:", e.status);
+          console.error("[CARDAPIO] /public/mesas bodyJson:", e.bodyJson);
+          console.error("[CARDAPIO] /public/mesas bodyText:", e.bodyText);
+        }
+      } catch (logErr) {
+        // ignore
+      }
       if (elMesaSelect) elMesaSelect.innerHTML = `<option value="">Erro ao carregar mesas</option>`;
     }
   }
