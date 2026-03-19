@@ -1003,10 +1003,18 @@
         <div class="product-card">
           <img class="product-img" src="${resolveImageUrl(p.image_url)}" alt="${p.name}" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMG}'" />
           <div class="product-body">
-            <div class="product-name">${p.name}</div>
+            <div class="product-name">
+              ${p.name}
+              ${p.is_daily_dish ? `<span class="tag tag-daily">Prato do Dia</span>` : ``}
+              ${p.promo_enabled ? `<span class="promo-icon" title="Promoção" aria-label="Promoção">%</span>` : ``}
+            </div>
             <div class="product-desc">${p.description || ""}</div>
             <div class="product-bottom">
-              <div class="product-price">${formatMt(p.price)}</div>
+              <div class="product-price">
+                ${p.promo_enabled && p.promo_price != null
+                  ? `<div class="price-wrap"><span class="price-old">${formatMt(p.price)}</span><span class="price-new">${formatMt(p.promo_price)}</span></div>`
+                  : `${formatMt(p.price)}`}
+              </div>
               <div class="product-actions">
                 <button class="details-btn" data-id="${p.id}" type="button" title="Detalhes" aria-label="Detalhes">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1077,6 +1085,9 @@
           name: p.nome,
           description: p.descricao,
           price: p.preco_venda,
+          is_daily_dish: !!p.is_daily_dish,
+          promo_enabled: !!p.promo_enabled,
+          promo_price: p.promo_price != null && p.promo_price !== "" ? Number(p.promo_price) : null,
           image_url: p.imagem,
           category_id: p.categoria_id,
           category_name: p.categoria_nome,

@@ -29,13 +29,23 @@ body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:v
 .product-card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
 .product-img{width:100%;height:130px;object-fit:cover;background:#eee}
 .product-body{padding:12px;display:flex;flex-direction:column;gap:8px}
-.product-name{font-weight:900}
+.product-name{font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .product-desc{font-size:12px;color:var(--muted);min-height:34px;line-height:1.25}
 .product-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .product-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .product-price{font-weight:900;color:var(--ok)}
 .add-btn{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:800}
 .add-btn:hover{background:var(--brand2)}
+
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:900;line-height:1;border:1px solid rgba(0,0,0,.08)}
+.tag-daily{background:#fff7ed;color:#9a3412;border-color:rgba(154,52,18,.22)}
+
+.promo-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#ef4444;color:#fff;font-weight:1000;font-size:12px;box-shadow:0 8px 18px rgba(239,68,68,.25);animation:promoBlink 1.2s ease-in-out infinite}
+@keyframes promoBlink{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.55}}
+
+.price-wrap{display:flex;flex-direction:column;align-items:flex-start;line-height:1.05}
+.price-old{font-weight:800;color:#6b7280;text-decoration:line-through;font-size:12px}
+.price-new{font-weight:1000;color:#ef4444}
 
 .add-btn:disabled{opacity:.55;cursor:not-allowed;background:#bfc5cc}
 .add-btn:disabled:hover{background:#bfc5cc}
