@@ -872,6 +872,19 @@
     return `${n.toFixed(2).replace(".", ",")} MT`;
   }
 
+  function formatPromoText(price, promoPrice) {
+    const p = Number(price);
+    const pp = Number(promoPrice);
+    if (!Number.isFinite(p) || !Number.isFinite(pp)) return "";
+    if (p <= 0) return "";
+    if (pp >= p) return "";
+    const savings = p - pp;
+    const pct = Math.round((savings / p) * 100);
+    if (!Number.isFinite(savings) || savings <= 0) return "";
+    const pctText = Number.isFinite(pct) && pct > 0 ? ` (-${pct}%)` : "";
+    return `Poupa ${formatMt(savings)}${pctText}`;
+  }
+
   function formatRelativeTime(iso) {
     try {
       if (!iso) return "";
@@ -1040,12 +1053,17 @@
               ${p.is_daily_dish ? `<span class="tag tag-daily">Prato do Dia</span>` : ``}
               ${p.promo_enabled ? `<span class="promo-icon" title="Promoção" aria-label="Promoção">%</span>` : ``}
             </div>
+            ${p.is_daily_dish ? `<div class="daily-note">Especial de hoje</div>` : ``}
             <div class="product-desc">${p.description || ""}</div>
             <div class="product-bottom">
               <div class="product-price">
                 ${p.promo_enabled && p.promo_price != null
                   ? `<div class="price-wrap"><span class="price-old">${formatMt(p.price)}</span><span class="price-new">${formatMt(p.promo_price)}</span></div>`
                   : `${formatMt(p.price)}`}
+                ${p.promo_enabled && p.promo_price != null ? (() => {
+                  const t = formatPromoText(p.price, p.promo_price);
+                  return t ? `<div class="promo-note">${t}</div>` : ``;
+                })() : ``}
               </div>
               <div class="product-actions">
                 <button class="details-btn" data-id="${p.id}" type="button" title="Detalhes" aria-label="Detalhes">
