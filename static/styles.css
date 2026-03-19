@@ -134,6 +134,9 @@ body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:v
   .back-btn{padding:8px 10px;border-radius:10px}
   .search-container{padding:10px 12px}
   .categories{padding:0 12px 10px 12px}
+  .category-btn{padding:8px 12px;font-size:13px}
+  .promo-filter{padding:2px 6px;gap:5px}
+  .promo-filter-icon{width:16px;height:16px;font-size:11px}
   .products-grid{grid-template-columns:1fr}
   .product-card{border-radius:14px}
   .product-img{height:160px}
@@ -153,4 +156,5 @@ body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:v
   .details-btn{padding:10px 12px}
   .add-btn{padding:10px 12px}
   .cart-container{right:10px;bottom:12px}
+  .promo-filter-text{display:none}
 }
