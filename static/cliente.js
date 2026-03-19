@@ -60,6 +60,21 @@
   let mesasIndex = new Map();
   let orderPollTimer = null;
 
+  function setSelectedCategoria(id) {
+    selectedCategoriaId = String(id || "todos");
+    try {
+      if (elCategories) {
+        elCategories.querySelectorAll(".category-btn").forEach((btn) => {
+          const bid = btn.getAttribute("data-id");
+          btn.classList.toggle("active", String(bid) === String(selectedCategoriaId));
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+    renderProdutos();
+  }
+
   function apiUrl(path) {
     if (!path.startsWith("/")) path = "/" + path;
     return `${API_BASE_URL}${path}`;
@@ -976,7 +991,21 @@
     if (!elCategories) return;
     // FastAPI menu não expõe categorias ainda. Mantemos apenas "Todos".
     categorias = [];
-    elCategories.innerHTML = `<button class="category-btn active" data-id="todos">Todos</button>`;
+
+    const hasPromo = (produtos || []).some((p) => !!p?.promo_enabled);
+    const hasDaily = (produtos || []).some((p) => !!p?.is_daily_dish);
+    const promoIndicator = hasPromo
+      ? `<span class="promo-filter" title="Há promoções"><span class="promo-filter-icon">%</span><span class="promo-filter-text">Promoção</span></span>`
+      : ``;
+    const dailyIndicator = hasDaily ? `<span class="filter-indicator filter-indicator-daily" title="Há prato do dia"></span>` : ``;
+
+    elCategories.innerHTML = `
+      <button class="category-btn" data-id="todos">Todos</button>
+      <button class="category-btn" data-id="daily">Prato do Dia ${dailyIndicator}</button>
+      <button class="category-btn" data-id="promo">Promoções ${promoIndicator}</button>
+    `;
+
+    setSelectedCategoria(selectedCategoriaId || "todos");
   }
 
   function renderProdutos() {
@@ -984,13 +1013,16 @@
     const search = (elSearchInput?.value || "").trim().toLowerCase();
 
     let items = produtos;
+
+    if (String(selectedCategoriaId) === "promo") {
+      items = items.filter((p) => !!p?.promo_enabled);
+    } else if (String(selectedCategoriaId) === "daily") {
+      items = items.filter((p) => !!p?.is_daily_dish);
+    }
+
     if (search) {
       items = items.filter((p) => String(p.name || "").toLowerCase().includes(search));
     }
-
-    items = [...items].sort((a, b) =>
-      String(a?.name || "").localeCompare(String(b?.name || ""), "pt", { sensitivity: "base" })
-    );
 
     if (!items.length) {
       elProductsGrid.innerHTML = `<div class="empty">Nenhum produto encontrado</div>`;
@@ -1104,15 +1136,20 @@
       });
       produtos = Array.from(uniqueById.values());
 
-      // Ordem alfabética por nome (pt, ignorando maiúsculas/acentos)
-      produtos = [...produtos].sort((a, b) =>
-        String(a?.name || "").localeCompare(String(b?.name || ""), "pt", { sensitivity: "base" })
-      );
-
+      renderCategorias();
       renderProdutos();
     } catch (e) {
       setError(elProductsGrid, `Erro ao carregar produtos: ${e.message}`);
     }
+  }
+
+  if (elCategories) {
+    elCategories.addEventListener("click", (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest(".category-btn") : null;
+      if (!btn) return;
+      const id = btn.getAttribute("data-id") || "todos";
+      setSelectedCategoria(id);
+    });
   }
 
   async function loadMesas() {

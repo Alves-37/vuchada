@@ -23,6 +23,15 @@ body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;margin:0;background:v
 .category-btn:hover{transform:translateY(-1px)}
 .category-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
 
+.filter-indicator{display:inline-block;width:10px;height:10px;border-radius:999px;margin-left:8px;vertical-align:middle;animation:filterBlink 1.2s ease-in-out infinite}
+.filter-indicator-promo{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.16)}
+.filter-indicator-daily{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.16)}
+@keyframes filterBlink{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.55}}
+
+.promo-filter{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#b91c1c;font-weight:900;animation:filterBlink 1.2s ease-in-out infinite}
+.promo-filter-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#ef4444;color:#fff;font-weight:1000;font-size:12px;line-height:1}
+.promo-filter-text{font-size:11px;line-height:1}
+
 .products{padding:8px 16px 56px 16px}
 .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
 
