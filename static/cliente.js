@@ -1261,9 +1261,15 @@
       elMesaSelect.innerHTML = `<option value="">Carregando mesas...</option>`;
       const mesas = await fetchJson("/public/mesas");
       console.log("[CARDAPIO] Resposta do servidor /public/mesas:", mesas);
-      if (!Array.isArray(mesas) || !mesas.length) {
-        console.error("[CARDAPIO] Erro ao carregar mesas: resposta não é um array ou está vazia");
+      if (!Array.isArray(mesas)) {
+        console.error("[CARDAPIO] Erro ao carregar mesas: resposta não é um array");
         elMesaSelect.innerHTML = `<option value="">Erro ao carregar mesas</option>`;
+        return;
+      }
+      if (!mesas.length) {
+        // Resposta vazia é válida: filial sem mesas ativas/configuradas
+        mesasIndex = new Map();
+        elMesaSelect.innerHTML = `<option value="">Nenhuma mesa disponível</option>`;
         return;
       }
       const mesasFiltradas = mesas
@@ -1271,6 +1277,11 @@
         // Mesa 0 é usada como balcão/sistema e não deve aparecer no online
         .filter((m) => Number(m.numero) !== 0)
         .sort((a, b) => Number(a.numero || 0) - Number(b.numero || 0));
+      if (!mesasFiltradas.length) {
+        mesasIndex = new Map();
+        elMesaSelect.innerHTML = `<option value="">Nenhuma mesa disponível</option>`;
+        return;
+      }
       mesasIndex = new Map();
       mesasFiltradas.forEach((m) => {
         mesasIndex.set(String(m.id), m);
@@ -1278,7 +1289,14 @@
       elMesaSelect.innerHTML =
         `<option value="">Selecione...</option>` +
         mesasFiltradas
-          .map((m) => `<option value="${m.id}">Mesa ${m.numero}</option>`)
+          .map((m) => {
+            const cap = m && m.capacity != null ? Number(m.capacity) : null;
+            const occ = m && m.occupied_seats != null ? Number(m.occupied_seats) : 0;
+            const hasCap = Number.isFinite(cap) && cap > 0;
+            const isFull = hasCap && Number.isFinite(occ) && occ >= cap;
+            const label = hasCap ? `Mesa ${m.numero} (${Math.max(0, occ)}/${cap})` : `Mesa ${m.numero}`;
+            return `<option value="${m.id}" ${isFull ? "disabled" : ""}>${label}</option>`;
+          })
           .join("");
     } catch (e) {
       try {
